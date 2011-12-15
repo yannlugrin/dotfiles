@@ -10,6 +10,11 @@ task :install do
       File.link(filename, linkname)
     end
   end
+
+  unless File.directory?(File.expand_path('../vim/bundle/vundle', __FILE__))
+    system('git clone http://github.com/gmarik/vundle.git ~/.vim/bundle/vundle')
+    system('vim -u ~/.vim/bundle.vim +BundleInstall +q')
+  end
 end
 
 desc 'list dotfiles'
