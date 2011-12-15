@@ -7,7 +7,7 @@ task :install do
       puts "`#{linkname}` already exist"
     else
       puts "`#{linkname}` -> `#{filename}`"
-      File.link(filename, linkname)
+      File.symlink(filename, linkname)
     end
   end
 
