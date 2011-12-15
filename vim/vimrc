@@ -106,3 +106,6 @@ nnoremap <c-k> <c-w>k
 nnoremap <c-h> <c-w>h
 nnoremap <c-l> <c-w>l
 
+"" other mapping
+command! W :w " Yeah 'W' save file
+
