@@ -3,8 +3,12 @@ task :install do
   dotfiles.each do |filename|
     linkname = File.expand_path("~/.#{File.basename(filename)}")
 
-    puts "#{linkname} -> #{filename}"
-    File.link(filename, linkname)
+    if File.exists?(linkname)
+      puts "`#{linkname}` already exist"
+    else
+      puts "`#{linkname}` -> `#{filename}`"
+      File.link(filename, linkname)
+    end
   end
 end
 
