@@ -85,3 +85,16 @@ endif
 "" Commentary
 vmap <Leader>/ <Plug>Commentary
 nmap <Leader>/ <Plug>CommentaryLine
+
+"" Command-T
+map <leader>gv :CommandTFlush<cr>\|:CommandT app/views<cr>
+map <leader>gc :CommandTFlush<cr>\|:CommandT app/controllers<cr>
+map <leader>gm :CommandTFlush<cr>\|:CommandT app/models<cr>
+map <leader>gh :CommandTFlush<cr>\|:CommandT app/helpers<cr>
+map <leader>gl :CommandTFlush<cr>\|:CommandT lib<cr>
+map <leader>gf :CommandTFlush<cr>\|:CommandT features<cr>
+map <leader>gg :vertical botright split Gemfile<cr>
+map <leader>f :CommandTFlush<cr>\|:CommandT<cr>
+cnoremap %% <C-R>=expand('%:h').'/'<cr>
+map <leader>F :CommandTFlush<cr>\|:CommandT %%<cr>
+
