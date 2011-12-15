@@ -1,0 +1,25 @@
+[user]
+	name = Yann Lugrin
+	email = yann.lugrin@liquid-concept.ch
+[alias]
+	co = checkout
+	ci = commit
+	st = status
+	up = !git pull --rebase && git push
+	unstage = reset HEAD
+	ignored = "!git ls-files --others --exclude-standard"
+	pending = !git --no-pager log origin/master..master && echo
+[color]
+	diff = auto
+	status = auto
+	branch = auto
+[core]
+	excludesfile = /Users/yannlugrin/.gitignore
+	quotepath = false
+[branch]
+	autosetupmerge = true
+	autosetuprebase = always
+[push]
+	default = upstream
+[rebase]
+	autosquash = true
