@@ -25,6 +25,7 @@ Bundle 'tpope/vim-repeat'
 Bundle 'tpope/vim-endwise'
 Bundle 'tpope/vim-surround'
 Bundle 'tpope/vim-unimpaired'
+Bundle 'Raimondi/delimitMate'
 
 Bundle 'altercation/vim-colors-solarized'
 
