@@ -65,6 +65,12 @@ if has('autocmd')
   au BufReadPost * if &filetype !~ '^git\c' && line("'\"") > 0 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
 endif
 
+"" Create missing dir on save
+augroup BWCCreateDir
+  au!
+  autocmd BufWritePre * if expand("<afile>")!~#'^\w\+:/' && !isdirectory(expand("%:h")) | execute "silent! !mkdir -p ".shellescape(expand('%:h'), 1) | redraw! | endif
+augroup END
+
 "" Backup & Swap
 set backup
 set backupdir=~/.vim/backup                   " where to put backup files.
