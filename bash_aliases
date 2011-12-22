@@ -24,7 +24,7 @@ function m {
   fi
 }
 
-# Rails
+# Ruby tools
 alias rc='rails console'
 
 function bundle_rake {
@@ -46,6 +46,16 @@ function bundle_guard {
   fi
 }
 alias guard="bundle_guard"
+
+function bundle_nanoc {
+  if [[ -f "Gemfile" ]]
+  then
+    bundle exec nanoc $@
+  else
+    guard $@
+  fi
+}
+alias nanoc="bundle_nanoc"
 
 # Capistrano
 alias deploy='bundle exec cap deploy:migrations'
