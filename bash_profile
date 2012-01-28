@@ -1,4 +1,4 @@
-export PATH="~/bin:/usr/local/bin:$PATH"
+export PATH="$PATH:/usr/local/bin:~/bin"
 export EDITOR="mvim"
 export GIT_EDITOR="mvim -f -c 'au VimLeave * !open -a iTerm'"
 
