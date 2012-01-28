@@ -58,4 +58,11 @@ function bundle_nanoc {
 alias nanoc="bundle_nanoc"
 
 # Capistrano
-alias deploy='bundle exec cap deploy:migrations'
+function deploy {
+  if [[ -d "db/migrate" ]]
+  then
+    bundle exec cap deploy:migrations
+  else
+    bundle exec cap deploy
+  fi
+}
