@@ -112,6 +112,11 @@ nnoremap <c-k> <c-w>k
 nnoremap <c-h> <c-w>h
 nnoremap <c-l> <c-w>l
 
+" Reselect visual block after indent/outdent
+vnoremap < <gv
+vnoremap > >gv
+
 "" other mapping
 command! W :w " Yeah 'W' save file
+command! Wall :wall " Yeah 'Wall' save all files
 
