@@ -28,6 +28,10 @@ Bundle 'tpope/vim-unimpaired'
 Bundle 'Raimondi/delimitMate'
 Bundle 'ervandew/supertab'
 
+Bundle 'MarcWeber/vim-addon-mw-utils'
+Bundle 'tomtom/tlib_vim'
+Bundle 'garbas/vim-snipmate'
+
 Bundle 'altercation/vim-colors-solarized'
 
 filetype plugin indent on                     " automatically detect file types -  shoulb be overided in vimrc
