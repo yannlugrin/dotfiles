@@ -26,6 +26,7 @@ Bundle 'tpope/vim-endwise'
 Bundle 'tpope/vim-surround'
 Bundle 'tpope/vim-unimpaired'
 Bundle 'Raimondi/delimitMate'
+Bundle 'ervandew/supertab'
 
 Bundle 'altercation/vim-colors-solarized'
 
