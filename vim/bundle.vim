@@ -13,10 +13,18 @@ Bundle 'tpope/vim-bundler'
 Bundle 'cakebaker/scss-syntax.vim'
 Bundle 'pangloss/vim-javascript'
 
+Bundle 'mattn/zencoding-vim'
+
 Bundle 'tpope/vim-markdown'
 
 Bundle 'tpope/vim-git'
 Bundle 'tpope/vim-fugitive'
+
+Bundle 'edsono/vim-matchit'
+Bundle 'kana/vim-textobj-user'
+Bundle 'nelstrom/vim-textobj-rubyblock'
+
+Bundle 'mileszs/ack.vim'
 
 Bundle 'wincent/Command-T'
 Bundle 'scrooloose/nerdtree'
@@ -27,6 +35,7 @@ Bundle 'tpope/vim-surround'
 Bundle 'tpope/vim-unimpaired'
 Bundle 'Raimondi/delimitMate'
 Bundle 'ervandew/supertab'
+Bundle 'vim-scripts/YankRing.vim'
 
 Bundle 'MarcWeber/vim-addon-mw-utils'
 Bundle 'tomtom/tlib_vim'
