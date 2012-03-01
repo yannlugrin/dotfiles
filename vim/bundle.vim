@@ -1,3 +1,4 @@
+set nocompatible
 filetype on                                   " required by OSX before disable it
 filetype off                                  " required by Vundle plumbing
 set rtp+=~/.vim/bundle/vundle/
