@@ -27,36 +27,6 @@ function m {
 # Ruby tools
 alias rc='rails console'
 
-function bundle_rake {
-  if [[ -f "Gemfile" ]]
-  then
-    bundle exec rake $@
-  else
-    rake $@
-  fi
-}
-alias rake="bundle_rake"
-
-function bundle_guard {
-  if [[ -f "Gemfile" ]]
-  then
-    bundle exec guard $@
-  else
-    guard $@
-  fi
-}
-alias guard="bundle_guard"
-
-function bundle_nanoc {
-  if [[ -f "Gemfile" ]]
-  then
-    bundle exec nanoc $@
-  else
-    guard $@
-  fi
-}
-alias nanoc="bundle_nanoc"
-
 # Capistrano
 function deploy {
   if [[ -d "db/migrate" ]]
