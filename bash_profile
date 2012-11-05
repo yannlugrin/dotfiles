@@ -17,3 +17,7 @@ export SIGNED_COOKIE_SECRET_TOKEN="bc84357593086ce26e825f80ab48d4d7a1b09a6306ed0
 
 # load bash completion
 [[ -f `brew --prefix`/etc/bash_completion ]] && . `brew --prefix`/etc/bash_completion
+
+export PATH=/Applications/SenchaSDKTools:$PATH
+
+export SENCHA_SDK_TOOLS_2_0_0_BETA3="/Applications/SenchaSDKTools"

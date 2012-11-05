@@ -38,6 +38,8 @@ Bundle 'Raimondi/delimitMate'
 Bundle 'ervandew/supertab'
 Bundle 'vim-scripts/YankRing.vim'
 
+Bundle 'aniero/vim-copy-as-rtf'
+
 Bundle 'MarcWeber/vim-addon-mw-utils'
 Bundle 'tomtom/tlib_vim'
 Bundle 'garbas/vim-snipmate'
