@@ -46,6 +46,9 @@ set ignorecase                                " searches are case insensitive...
 set smartcase                                 " ... unless they contain at least one capital letter
 nnoremap <CR> :nohlsearch<CR>                 " clear the search buffer when hitting return
 
+"" NERDTree
+let NERDTreeIgnore = ['\.zeus.sock$', '\~$']
+
 "" Match filetype
 filetype plugin indent on                     " Automatically detect file types
 if has('autocmd')
