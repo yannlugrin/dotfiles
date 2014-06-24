@@ -1,0 +1,8 @@
+# Utilities
+alias r!='. ~/.zshrc'
+alias mkdir='mkdir -p'
+alias l='ls'
+alias ll='ls -l'
+alias la='ls -al'
+alias -g G='| grep'
+alias -g M='| less'

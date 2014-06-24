@@ -1,0 +1,10 @@
+.DS_Store
+.com.apple.timemachine.supported
+
+.svn
+.powder
+.bundle
+bundle
+
+log
+tmp
