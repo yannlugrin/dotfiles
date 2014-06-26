@@ -45,8 +45,9 @@ setopt extendedglob
 unsetopt nomatch
 
 # handy keybindings
-bindkey "^A" beginning-of-line
-bindkey "^E" end-of-line
+bindkey "^A"   beginning-of-line
+bindkey "^E"   end-of-line
+bindkey "^[[Z" reverse-menu-complete
 
 # use vim as the visual editor
 export VISUAL=vim
