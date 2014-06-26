@@ -8,7 +8,13 @@ alias -g G='| grep'
 alias -g M='| less'
 
 # Git
+alias g='git'
+compdef _git g=git
 alias gst='git status'
+compdef _git gst=git-status
 alias gc='git commit'
+compdef _git gc=git-commit
 alias gc!='git commit --amend'
+compdef _git gc!=git-commit
 alias gap='git add --patch'
+compdef _git gap=git-commit
