@@ -11,6 +11,10 @@ export PATH=$SENCHA_CMD_3_0_0:$PATH
 # homebrew
 export PATH="/usr/local/bin:$PATH"
 
+# rbenv
+export PATH="$HOME/.rbenv/bin:$PATH"
+eval "$(rbenv init -)"
+
 # npm bin
 export PATH="/usr/local/share/npm/bin:$PATH"
 
