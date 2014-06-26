@@ -6,3 +6,8 @@ alias ll='ls -l'
 alias la='ls -al'
 alias -g G='| grep'
 alias -g M='| less'
+
+# Git
+alias gst='git status'
+alias gc='git commit'
+alias gc!='git commit --amend'
