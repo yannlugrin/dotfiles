@@ -18,3 +18,5 @@ alias gc!='git commit --amend'
 compdef _git gc!=git-commit
 alias gap='git add --patch'
 compdef _git gap=git-commit
+alias gp='git push'
+compdef _git gp='git push'
