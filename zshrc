@@ -41,9 +41,6 @@ DIRSTACKSIZE=3
 # Enable extended globbing
 setopt extendedglob
 
-# Allow [ or ] whereever you want
-unsetopt nomatch
-
 # handy keybindings
 bindkey "^A"   beginning-of-line
 bindkey "^E"   end-of-line
