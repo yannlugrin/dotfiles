@@ -38,6 +38,13 @@ set list                                      " Show invisible characters
 set backspace=indent,eol,start                " backspace through everything in insert mode
 set list listchars=tab:»·,trail:·             " Reset tje listchars
 
+"" Searching
+set hlsearch                                  " highlight matches
+set incsearch                                 " incremental searching
+set ignorecase                                " searches are case insensitive...
+set smartcase                                 " ... unless they contain at least one capital letter
+nnoremap <CR> :nohlsearch<CR>                 " clear the search buffer when hitting return
+
 "" Color scheme
 set background=dark
 let g:solarized_termcolors=256
