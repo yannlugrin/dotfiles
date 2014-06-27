@@ -12,6 +12,7 @@ Plugin 'gmarik/Vundle.vim'
 " Define bundles
 Plugin 'altercation/vim-colors-solarized'
 Plugin 'ervandew/supertab'                 " allows to use <Tab> for all insert completion needs
+Plugin 'wincent/command-t'
 
 " All of your Plugins must be added before the following line
 call vundle#end()

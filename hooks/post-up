@@ -1,12 +1,21 @@
 #!/bin/sh
 
-# Install Vundle and required vim directories
+# Install Vundle
 if [ ! -e $HOME/.vim/bundle/Vundle.vim ]; then
   git clone https://github.com/gmarik/Vundle.vim.git $HOME/.vim/bundle/Vundle.vim
 fi
 vim -u $HOME/.vimrc.bundles +PluginInstall +qa
 
+# create vim swap foler
 mkdir -p $HOME/.vim/swap
+
+# compile Comman-T plugin
+if [ -e $HOME/.vim/bundle/command-t/ruby/command-t ]; then
+  cd $HOME/.vim/bundle/command-t/ruby/command-t
+  ruby extconf.rb
+  make
+  cd $HOME
+fi
 
 # Configure zsh
 mkdir -p $HOME/.zsh
