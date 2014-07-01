@@ -45,9 +45,10 @@ setopt extendedglob
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
 
 # handy keybindings
-bindkey "^A"   beginning-of-line
-bindkey "^E"   end-of-line
-bindkey "^[[Z" reverse-menu-complete
+bindkey "^A" beginning-of-line
+bindkey "^E" end-of-line
+bindkey "^R" history-incremental-search-backward
+bindkey "^P" history-search-backward
 
 # use vim as the visual editor
 export VISUAL=vim
