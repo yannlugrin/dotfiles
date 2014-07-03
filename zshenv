@@ -18,6 +18,9 @@ eval "$(rbenv init -)"
 # npm bin
 export PATH="/usr/local/share/npm/bin:$PATH"
 
+# heroku
+export PATH="/usr/local/heroku/bin:$PATH"
+
 # postgres
 export PATH="/Applications/Postgres.app/Contents/MacOS/bin:$PATH"
 
