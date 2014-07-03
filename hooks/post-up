@@ -17,6 +17,11 @@ if [ -e $HOME/.vim/bundle/command-t/ruby/command-t ]; then
   cd $HOME
 fi
 
+# configure rbenv plugins
+if [ -e $HOME/.rbenv ]; then
+  git clone -- git://github.com/carsomyr/rbenv-bundler.git $HOME/.rbenv/plugins/bundler
+fi
+
 # Configure zsh
 mkdir -p $HOME/.zsh
 
