@@ -14,6 +14,7 @@ Plugin 'altercation/vim-colors-solarized'
 Plugin 'ervandew/supertab'                 " allows to use <Tab> for all insert completion needs
 Plugin 'wincent/command-t'
 Plugin 'tpope/vim-commentary'
+Plugin 'tpope/vim-surround'                " provides mappings to easily delete, change and add such surroundings in pairs
 
 " All of your Plugins must be added before the following line
 call vundle#end()
