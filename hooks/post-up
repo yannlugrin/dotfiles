@@ -17,8 +17,8 @@ if [ -e $HOME/.vim/bundle/command-t/ruby/command-t ]; then
   cd $HOME
 fi
 
-# configure rbenv plugins
-if [ -e $HOME/.rbenv ]; then
+# add rbenv bundler plugin
+if [ ! -e $HOME/.rbenv/plugins/bundler ]; then
   git clone -- git://github.com/carsomyr/rbenv-bundler.git $HOME/.rbenv/plugins/bundler
 fi
 
