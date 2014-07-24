@@ -15,6 +15,7 @@ Plugin 'ervandew/supertab'                 " allows to use <Tab> for all insert 
 Plugin 'wincent/command-t'
 Plugin 'tpope/vim-commentary'
 Plugin 'tpope/vim-surround'                " provides mappings to easily delete, change and add such surroundings in pairs
+Plugin 'christoomey/vim-tmux-navigator'    " Navigation betwean vim & tmux transparently
 
 " All of your Plugins must be added before the following line
 call vundle#end()
