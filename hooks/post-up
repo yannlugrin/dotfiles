@@ -12,8 +12,16 @@ mkdir -p $HOME/.vim/swap
 # compile Comman-T plugin
 if [ -e $HOME/.vim/bundle/command-t/ruby/command-t ]; then
   cd $HOME/.vim/bundle/command-t/ruby/command-t
+  rbenv local system
   ruby extconf.rb
   make
+  cd $HOME
+fi
+
+# compile YouCompleteMe plugin
+if [ -e $HOME/.vim/bundle/YouCompleteMe ]; then
+  cd $HOME/.vim/bundle/YouCompleteMe
+  sh install.sh
   cd $HOME
 fi
 

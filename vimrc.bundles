@@ -10,13 +10,16 @@ call vundle#begin()
 Plugin 'gmarik/Vundle.vim'
 
 " Define bundles
+Plugin 'wincent/Command-T'
+Plugin 'Valloric/YouCompleteMe'            " Autocomplete
 Plugin 'altercation/vim-colors-solarized'
-Plugin 'ervandew/supertab'                 " allows to use <Tab> for all insert completion needs
-Plugin 'wincent/command-t'
 Plugin 'tpope/vim-commentary'
 Plugin 'tpope/vim-surround'                " provides mappings to easily delete, change and add such surroundings in pairs
 Plugin 'christoomey/vim-tmux-navigator'    " Navigation betwean vim & tmux transparently
 Plugin 'matchit.zip', {'name': 'matchit'}  " allows you to configure % to match more than just single characters
+Plugin 'Raimondi/delimitMate'              " To autocomplate quote, brackets and more
+Plugin 'mattn/emmet-vim'                   " Easy create HTML (http://emmet.io)
+Plugin 'kris89/vim-multiple-cursors'       " Have multiple cursors in edit mode
 
 " All of your Plugins must be added before the following line
 call vundle#end()
