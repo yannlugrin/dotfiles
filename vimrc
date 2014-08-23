@@ -45,6 +45,10 @@ set ignorecase                                " searches are case insensitive...
 set smartcase                                 " ... unless they contain at least one capital letter
 nnoremap <CR> :nohlsearch<CR>                 " clear the search buffer when hitting return
 
+"" Command-T
+let g:CommandTAcceptSelectionSplitMap = ['<C-c>']
+let g:CommandTCancelMap = ['<C-x>']
+
 "" Color scheme
 set background=dark
 let g:solarized_termcolors=256
