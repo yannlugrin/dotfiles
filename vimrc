@@ -38,6 +38,8 @@ set list                                      " Show invisible characters
 set backspace=indent,eol,start                " backspace through everything in insert mode
 set list listchars=tab:»·,trail:·             " Reset tje listchars
 
+autocmd BufWritePre * :%s/\s\+$//e            " remove trailling space
+
 "" Searching
 set hlsearch                                  " highlight matches
 set incsearch                                 " incremental searching
