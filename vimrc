@@ -50,6 +50,7 @@ nnoremap <CR> :nohlsearch<CR>                 " clear the search buffer when hit
 "" Command-T
 let g:CommandTAcceptSelectionSplitMap = ['<C-c>']
 let g:CommandTCancelMap = ['<C-x>']
+let g:CommandTWildIgnore=&wildignore . ",**/bower_components/*,**/node_modules/*"
 
 "" Color scheme
 set background=dark
