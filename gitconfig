@@ -8,7 +8,7 @@
   st = status
   lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
   trust = !git branch > /dev/null && mkdir -p "$(git rev-parse --show-toplevel)/.git/safe" && echo "git repository is safe"
-  bprune = !git branch --merged master | grep -v 'master$' | xargs git branch -d
+  bprune = !git branch --merged master | grep -v '(master|staging|production|stable)$' | xargs git branch -d
 
 [color]
   diff = auto
