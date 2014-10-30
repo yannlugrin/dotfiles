@@ -3,6 +3,7 @@ export PATH="$HOME/.dotfiles/bin:$PATH"
 
 # repository bin - mkdir .git/safe in the root of repositories you trust
 export PATH=".git/safe/../../bin:$PATH"
+export PATH=".git/safe/../../node_modules/.bin:$PATH"
 
 # sencha
 export PATH="$HOME/Development/Sencha/bin/Sencha/Cmd/5.0.0.160:$PATH"
