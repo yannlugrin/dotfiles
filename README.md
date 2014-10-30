@@ -26,7 +26,7 @@ Clone onto your laptop:
 Install [rcm](https://github.com/thoughtbot/rcm) and others dependencies
 like `vim` and more:
 
-    brew bundle .dotfiles/Brewfile
+    sh ~/.dotfiles/Brewfile
 
 Install:
 
