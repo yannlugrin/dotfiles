@@ -17,7 +17,6 @@ function custom_path {
   else
     echo '%~'
   fi
-
 }
 
 # return true if current directory is in a git working space

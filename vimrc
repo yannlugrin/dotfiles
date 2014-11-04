@@ -60,3 +60,18 @@ colorscheme solarized
 "" Match filetype
 filetype plugin indent on
 
+"" read custom project config
+let b:projectDir=expand("%:p:h")
+let b:homeDir=expand('<sfile>:p:h')
+
+while 1
+  if filereadable(b:projectDir.'/.vimrc')
+    execute "source ".b:projectDir.'/.vimrc'
+    break
+  endif
+
+  let b:projectDir=fnamemodify(b:projectDir, ':h')
+  if b:projectDir==b:homeDir
+    break
+  endif
+endwhile
