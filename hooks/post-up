@@ -41,6 +41,12 @@ if [ ! -e $HOME/.rbenv/plugins/rbenv-default-gems ]; then
   git clone -- git://github.com/sstephenson/rbenv-default-gems.git $HOME/.rbenv/plugins/rbenv-default-gems
 fi
 
+# add rbenv aliases plugin
+if [ ! -e $HOME/.rbenv/plugins/rbenv-aliases]; then
+  git clone -- git://github.com/tpope/rbenv-aliases.git ~/.rbenv/plugins/rbenv-aliases
+  rbenv alias --auto
+fi
+
 # Configure zsh
 mkdir -p $HOME/.zsh
 
