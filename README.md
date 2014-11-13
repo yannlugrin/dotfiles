@@ -41,6 +41,9 @@ You can safely run `rcup` multiple times to update:
 
     rcup
 
+If you use iTerm, I recommand solarized color scheme (same used in my Vim
+config): http://ethanschoonover.com/solarized.
+
 More informations about my config
 ---------------------------------
 
