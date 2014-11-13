@@ -6,5 +6,7 @@
 .bundle
 bundle
 
+.vimrc
+
 log
 tmp
