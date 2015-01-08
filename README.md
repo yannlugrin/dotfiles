@@ -12,6 +12,10 @@ Git installed:
 
     brew install git zsh
 
+Add homebrew zsh path to list of shell:
+
+    echo $(which zsh) | sudo tee -a /etc/shells
+
 Set zsh as your login shell:
 
     chsh -s $(which zsh)
