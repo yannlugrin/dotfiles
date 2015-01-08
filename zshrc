@@ -61,3 +61,6 @@ export EDITOR=$VISUAL
 if [ -f "$ZSH/themes/$ZSH_THEME.zsh-theme" ]; then
   source "$ZSH/themes/$ZSH_THEME.zsh-theme"
 fi
+
+### Added by the Heroku Toolbelt
+export PATH="/usr/local/heroku/bin:$PATH"
