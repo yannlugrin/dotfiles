@@ -30,6 +30,14 @@ function fetch_git_repository {
   # Only fetch if we're inside a git repository.
   is_git_repository || return 1
 
+  local pid_path=`git rev-parse --git-dir`/auto_fetch.pid
+  local pid=`cat $pid_path`
+
+  if [[ -n "$pid" && "$pid" -ne "$$" ]]; then
+    kill -0 $pid && return 0
+  fi
+  echo $$ > $pid_path
+
   # Fetch origin
   if [[ $SECONDS -ge $((_ZSH_THEME_GIT_FETCH_SINCE + ZSH_THEME_GIT_FETCH_INTERVAL)) ]]; then
     _ZSH_THEME_GIT_FETCH_SINCE=$SECONDS
