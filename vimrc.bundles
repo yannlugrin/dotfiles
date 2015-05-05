@@ -20,6 +20,8 @@ Plugin 'matchit.zip', {'name': 'matchit'}  " allows you to configure % to match 
 Plugin 'Raimondi/delimitMate'              " To autocomplate quote, brackets and more
 Plugin 'mattn/emmet-vim'                   " Easy create HTML (http://emmet.io)
 Plugin 'kris89/vim-multiple-cursors'       " Have multiple cursors in edit mode
+Plugin 'skalnik/vim-vroom'                 " Run ruby tests
+Plugin 'benmills/vimux'                    " integration with tmux
 
 " All of your Plugins must be added before the following line
 call vundle#end()

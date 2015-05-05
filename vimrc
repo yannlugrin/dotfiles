@@ -52,6 +52,17 @@ let g:CommandTAcceptSelectionSplitMap = ['<C-c>']
 let g:CommandTCancelMap = ['<C-x>']
 let g:CommandTWildIgnore=&wildignore . ",**/bower_components/*,**/node_modules/*"
 
+"" Turbux
+let g:vroom_use_vimux       = 1
+let g:vroom_use_bundle_exec = 0
+let g:vroom_use_binstubs    = 0
+
+"" Vimux
+let g:VimuxRunnerType     = 'pane'
+let g:VimuxUseNearest     = 1
+let g:VimuxOrientation    = 'v'
+let g:VimuxHeight         = '20'
+
 "" Color scheme
 set background=dark
 let g:solarized_termcolors=256
