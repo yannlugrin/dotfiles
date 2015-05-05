@@ -42,7 +42,7 @@ if [ ! -e $HOME/.rbenv/plugins/rbenv-default-gems ]; then
 fi
 
 # add rbenv aliases plugin
-if [ ! -e $HOME/.rbenv/plugins/rbenv-aliases]; then
+if [ ! -e $HOME/.rbenv/plugins/rbenv-aliases ]; then
   git clone -- git://github.com/tpope/rbenv-aliases.git ~/.rbenv/plugins/rbenv-aliases
   rbenv alias --auto
 fi
