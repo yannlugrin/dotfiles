@@ -21,7 +21,7 @@ fi
 # compile YouCompleteMe plugin
 if [ -e $HOME/.vim/bundle/YouCompleteMe ]; then
   cd $HOME/.vim/bundle/YouCompleteMe
-  sh install.sh
+  sh install.sh --clang-completer
   cd $HOME
 fi
 

@@ -1,4 +1,5 @@
 brew tap thoughtbot/formulae
+brew install cmake
 brew install rcm
 brew install git
 brew install vim
