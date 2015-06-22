@@ -23,6 +23,7 @@ Plugin 'kris89/vim-multiple-cursors'       " Have multiple cursors in edit mode
 Plugin 'skalnik/vim-vroom'                 " Run ruby tests
 Plugin 'benmills/vimux'                    " integration with tmux
 Plugin 'mustache/vim-mustache-handlebars'
+Plugin 'editorconfig/editorconfig-vim'
 
 " All of your Plugins must be added before the following line
 call vundle#end()
