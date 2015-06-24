@@ -63,6 +63,9 @@ let g:VimuxUseNearest     = 1
 let g:VimuxOrientation    = 'v'
 let g:VimuxHeight         = '20'
 
+"" Length Matter
+let g:lengthmatters_excluded = ['help', 'GoToFile']
+
 "" Color scheme
 set background=dark
 let g:solarized_termcolors=256
