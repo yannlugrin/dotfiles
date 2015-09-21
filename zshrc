@@ -2,9 +2,6 @@
 ### ZSH
 ###
 
-# ZSH path
-export ZSH=$HOME/.zsh
-
 # Set name of the theme to load.
 ZSH_THEME="yannlugrin"
 
@@ -50,10 +47,6 @@ bindkey "^E" end-of-line
 bindkey "^R" history-incremental-search-backward
 bindkey "^P" history-search-backward
 
-# use vim as the visual editor
-export VISUAL=vim
-export EDITOR=$VISUAL
-
 # aliases
 [[ -f ~/.aliases ]] && source ~/.aliases
 
@@ -61,9 +54,3 @@ export EDITOR=$VISUAL
 if [ -f "$ZSH/themes/$ZSH_THEME.zsh-theme" ]; then
   source "$ZSH/themes/$ZSH_THEME.zsh-theme"
 fi
-
-### Added by the Heroku Toolbelt
-export PATH="/usr/local/heroku/bin:$PATH"
-
-# added by travis gem
-[ -f /Users/yannlugrin/.travis/travis.sh ] && source /Users/yannlugrin/.travis/travis.sh
