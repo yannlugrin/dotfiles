@@ -2,6 +2,9 @@
 ### ZSH
 ###
 
+# ZSH path
+export ZSH=$HOME/.zsh
+
 # Set name of the theme to load.
 ZSH_THEME="yannlugrin"
 
@@ -18,9 +21,9 @@ autoload -U compinit
 compinit -d "$ZSH/.zcompdump"
 
 # load custom executable functions
-#for function in $ZSH/functions/*; do
-#  source $function
-#done
+for function in $ZSH/functions/*; do
+  source $function
+done
 
 # enable colored output from ls, etc
 export CLICOLOR=1
