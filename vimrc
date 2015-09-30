@@ -68,7 +68,8 @@ let g:VimuxOrientation    = 'v'
 let g:VimuxHeight         = '20'
 
 "" Length Matter
-let g:lengthmatters_excluded = ['help', 'GoToFile']
+let g:lengthmatters_excluded        = ['help', 'GoToFile', 'nerdtree']
+let g:lengthmatters_start_at_column = 101
 
 "" Color scheme
 set background=dark
