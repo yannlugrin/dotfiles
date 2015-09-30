@@ -40,6 +40,10 @@ set list listchars=tab:»·,trail:·             " Reset tje listchars
 
 autocmd BufWritePre * :%s/\s\+$//e            " remove trailling space
 
+"" Select lines after ident
+vnoremap > >gv
+vnoremap < <gv
+
 "" Searching
 set hlsearch                                  " highlight matches
 set incsearch                                 " incremental searching
