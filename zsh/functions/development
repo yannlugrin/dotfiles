@@ -45,6 +45,10 @@ function frontend () {
   goto ~/Development/yalty/frontend
 }
 
+function dotfiles () {
+  goto ~/.dotfiles
+}
+
 function dev () {
   goto `pwd`
 }
