@@ -64,6 +64,10 @@ export PATH="/usr/local/share/npm/bin:$PATH"
 export PATH="$HOME/.rbenv/bin:$PATH"
 eval "$(rbenv init -)"
 
+# nvm
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
+
 # travis
 [ -f /Users/yannlugrin/.travis/travis.sh ] && source /Users/yannlugrin/.travis/travis.sh
 
