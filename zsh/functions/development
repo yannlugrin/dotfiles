@@ -45,6 +45,22 @@ function frontend () {
   goto ~/Development/yalty/frontend
 }
 
+function components () {
+  goto ~/Development/yalty/frontend-components
+}
+
+function styleguide () {
+  goto ~/Development/yalty/styleguide
+}
+
+function review () {
+  goto ~/Development/yalty/review-server
+}
+
+function wordpress () {
+  goto ~/Development/yalty/wordpress
+}
+
 function dotfiles () {
   goto ~/.dotfiles
 }
