@@ -16,7 +16,7 @@
   branch = auto
 
 [core]
-  whitespace = space-before-tab,trailing-space,cr-at-eol
+  whitespace = space-before-tab,trailing-space,cr-at-eol,blank-at-eof
   autocrlf = input
   excludesfile = ~/.gitignore
   editor = vim
