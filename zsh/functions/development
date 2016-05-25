@@ -49,16 +49,24 @@ function components () {
   goto ~/Development/yalty/frontend-components
 }
 
+function translations () {
+  goto ~/Development/yalty/frontend-translations
+}
+
+function documentation () {
+  goto ~/Development/yalty/documentation
+}
+
 function styleguide () {
   goto ~/Development/yalty/styleguide
 }
 
-function review () {
-  goto ~/Development/yalty/review-server
-}
-
 function wordpress () {
   goto ~/Development/yalty/wordpress
+}
+
+function blueprint2slate () {
+  goto ~/Development/yalty/blueprint2slate
 }
 
 function dotfiles () {
