@@ -25,6 +25,7 @@ Plugin 'benmills/vimux'                    " integration with tmux
 Plugin 'mustache/vim-mustache-handlebars'
 Plugin 'editorconfig/editorconfig-vim'
 Plugin 'whatyouhide/vim-lengthmatters'     " hightlight line with more than 80 chars
+Plugin 'kylef/apiblueprint.vim'
 
 " All of your Plugins must be added before the following line
 call vundle#end()
