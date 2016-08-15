@@ -74,6 +74,9 @@ export NVM_DIR="$HOME/.nvm"
 # Dotfiles scripts
 export PATH="$HOME/.dotfiles/bin:$PATH"
 
+# Home bins
+export PATH="$HOME/bin:$PATH"
+
 # repository bin - mkdir .git/safe in the root of repositories you trust
 export PATH=".git/safe/../../bin:$PATH"
 export PATH=".git/safe/../../node_modules/.bin:$PATH"
