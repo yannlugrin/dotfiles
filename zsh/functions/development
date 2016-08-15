@@ -57,6 +57,10 @@ function documentation () {
   goto ~/Development/yalty/documentation
 }
 
+function e2e () {
+  goto ~/Development/yalty/e2e
+}
+
 function styleguide () {
   goto ~/Development/yalty/styleguide
 }
