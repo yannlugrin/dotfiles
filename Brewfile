@@ -6,6 +6,7 @@ brew install codeclimate
 brew install docker-compose
 brew install git
 brew install lastpass-cli
+brew install nvm
 brew install postgresql94
 brew install rbenv
 brew install rcm
