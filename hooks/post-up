@@ -25,22 +25,6 @@ if [ -e $HOME/.vim/bundle/YouCompleteMe ]; then
   cd $HOME
 fi
 
-# add rbenv update plugin
-if [ ! -e $HOME/.rbenv/plugins/rbenv-update ]; then
-  git clone -- git://github.com/rkh/rbenv-update.git $HOME/.rbenv/plugins/rbenv-update
-fi
-
-# add rbenv default gems plugin
-if [ ! -e $HOME/.rbenv/plugins/rbenv-default-gems ]; then
-  git clone -- git://github.com/sstephenson/rbenv-default-gems.git $HOME/.rbenv/plugins/rbenv-default-gems
-fi
-
-# add rbenv aliases plugin
-if [ ! -e $HOME/.rbenv/plugins/rbenv-aliases ]; then
-  git clone -- git://github.com/tpope/rbenv-aliases.git ~/.rbenv/plugins/rbenv-aliases
-  rbenv alias --auto
-fi
-
 # Configure zsh
 mkdir -p $HOME/.zsh
 
