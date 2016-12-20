@@ -73,6 +73,22 @@ function blueprint2slate () {
   goto ~/Development/yalty/blueprint2slate
 }
 
+function docker-centos-ruby () {
+  goto ~/Development/yalty/docker-centos-ruby
+}
+
+function docker-ember-build () {
+  goto ~/Development/yalty/docker-ember-builder
+}
+
+function hooks-server () {
+  goto ~/Development/yalty/hooks-server
+}
+
+function capistrano-docker-copy () {
+  goto ~/Development/yalty/capistrano-docker-copy
+}
+
 function dotfiles () {
   goto ~/.dotfiles
 }
