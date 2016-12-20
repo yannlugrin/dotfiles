@@ -57,16 +57,10 @@ export EDITOR=$VISUAL
 # homebrew
 export PATH="/usr/local/bin:$PATH"
 
-# npm bin
-export PATH="/usr/local/share/npm/bin:$PATH"
-
 # rbenv
 export PATH="$HOME/.rbenv/bin:$PATH"
 eval "$(rbenv init -)"
 
-# nvm
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
 
 # travis
 [ -f /Users/yannlugrin/.travis/travis.sh ] && source /Users/yannlugrin/.travis/travis.sh
@@ -83,6 +77,11 @@ export PATH=".git/safe/../../node_modules/.bin:$PATH"
 
 # aliases
 [[ -f ~/.aliases ]] && source ~/.aliases
+
+# load plugins
+for plugin in $ZSH/plugins/*/*.zsh; do
+  source $plugin
+done
 
 # load zsh theme
 if [ -f "$ZSH/themes/$ZSH_THEME.zsh-theme" ]; then
