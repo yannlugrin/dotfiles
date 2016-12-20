@@ -54,9 +54,6 @@ bindkey "^P" history-search-backward
 export VISUAL=vim
 export EDITOR=$VISUAL
 
-# homebrew
-export PATH="/usr/local/bin:$PATH"
-
 # rbenv
 export PATH="$HOME/.rbenv/bin:$PATH"
 eval "$(rbenv init -)"
