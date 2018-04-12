@@ -37,56 +37,8 @@ function goto () {
   fi
 }
 
-function backend () {
-  goto ~/Development/yalty/backend
-}
-
-function frontend () {
-  goto ~/Development/yalty/frontend
-}
-
-function components () {
-  goto ~/Development/yalty/frontend-components
-}
-
-function translations () {
-  goto ~/Development/yalty/frontend-translations
-}
-
-function documentation () {
-  goto ~/Development/yalty/documentation
-}
-
-function e2e () {
-  goto ~/Development/yalty/e2e
-}
-
-function styleguide () {
-  goto ~/Development/yalty/styleguide
-}
-
-function wordpress () {
-  goto ~/Development/yalty/wordpress
-}
-
-function blueprint2slate () {
-  goto ~/Development/yalty/blueprint2slate
-}
-
-function docker-centos-ruby () {
-  goto ~/Development/yalty/docker-centos-ruby
-}
-
-function docker-ember-build () {
-  goto ~/Development/yalty/docker-ember-builder
-}
-
-function hooks-server () {
-  goto ~/Development/yalty/hooks-server
-}
-
-function capistrano-docker-copy () {
-  goto ~/Development/yalty/capistrano-docker-copy
+function website () {
+  goto ~/Development/machiq/website
 }
 
 function dotfiles () {
