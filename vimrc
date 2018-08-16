@@ -54,7 +54,7 @@ nnoremap <CR> :nohlsearch<CR>                 " clear the search buffer when hit
 "" Command-T
 let g:CommandTAcceptSelectionSplitMap = ['<C-c>']
 let g:CommandTCancelMap = ['<C-x>']
-let g:CommandTWildIgnore=&wildignore . ",**/bower_components/*,**/node_modules/*,**/vendor/*,**/tmp/*,**/.git/*"
+let g:CommandTWildIgnore=&wildignore . ",bower_components,node_modules,vendor,tmp,.git,__pycache__"
 let g:CommandTScanDotDirectories = 1
 let g:CommandTAlwaysShowDotFiles = 1
 

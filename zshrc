@@ -62,6 +62,10 @@ eval "$(rbenv init -)"
 export PATH="/usr/local/opt/python/libexec/bin:$PATH"
 export PATH="$HOME/Library/Python/2.7/bin:$PATH"
 
+export WORKON_HOME=$HOME/.virtualenvs
+export PROJECT_HOME=$HOME/Development
+[ -f /usr/local/bin/virtualenvwrapper.sh ] && source /usr/local/bin/virtualenvwrapper.sh
+
 # travis
 [ -f /Users/yannlugrin/.travis/travis.sh ] && source /Users/yannlugrin/.travis/travis.sh
 
