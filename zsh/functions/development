@@ -2,7 +2,7 @@ function goto () {
   working_directory=$1
   cd $working_directory
 
-  session_name=`pwd | sed -n 's:\(^.*/Development/[^/]*/[^/]*\).*$:\1:p' | awk -F/ '{print $(NF-1) "/" $(NF)}'`
+  session_name=`pwd | sed -n 's:\(^.*/[^/]*/[^/]*\).*$:\1:p' | awk -F/ '{print $(NF-1) "/" $(NF)}'`
   if [ -z "$session_name" ]; then
     session_name='default'
   fi
@@ -35,10 +35,6 @@ function goto () {
   if [ $? -ne 0 ]; then
     tmux attach -t $session_name
   fi
-}
-
-function website () {
-  goto ~/Development/machiq/website
 }
 
 function dotfiles () {
