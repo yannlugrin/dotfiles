@@ -12,9 +12,8 @@ mkdir -p $HOME/.vim/swap
 # compile Comman-T plugin
 if [ -e $HOME/.vim/bundle/command-t/ruby/command-t ]; then
   cd $HOME/.vim/bundle/command-t/ruby/command-t/ext/command-t
-  rbenv local system
   make clean
-  ruby extconf.rb
+  /usr/local/opt/ruby/bin/ruby extconf.rb
   make
   cd $HOME
 fi
