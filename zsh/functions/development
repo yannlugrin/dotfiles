@@ -2,7 +2,7 @@ function goto () {
   working_directory=$1
   cd $working_directory
 
-  session_name=`pwd | sed -n 's:\(^.*/[^/]*/[^/]*\).*$:\1:p' | awk -F/ '{print $(NF-1) "/" $(NF)}'`
+  session_name=`pwd | sed -n 's:\(^.*/[^/]*/[^/]*\).*$:\1:p' | tr -d '.' | awk -F/ '{print $(NF-1) "/" $(NF)}'`
   if [ -z "$session_name" ]; then
     session_name='default'
   fi
