@@ -31,7 +31,7 @@ function fetch_git_repository {
   is_git_repository || return 1
 
   local pid_path=`git rev-parse --git-dir`/auto_fetch.pid
-  local pid=`cat $pid_path`
+  local pid=`cat $pid_path 2&>/dev/null`
 
   if [[ -n "$pid" && "$pid" -ne "$$" ]]; then
     kill -0 $pid && return 0
