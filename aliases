@@ -8,6 +8,15 @@ alias la='ls -al'
 alias -g G='| grep'
 alias -g M='| less'
 
+
+# Docker
+alias dc="docker-compose -p $(project_name)"
+compdef _docker_compose dc=docker-compose
+alias dce="docker-compose -p $(project_name) exec"
+compdef _docker_compose dc="docker-compose exec"
+alias dcb="docker-compose -p $(project_name) build"
+compdef _docker_compose dc="docker-compose build"
+
 # Git
 alias g='git'
 compdef _git g=git

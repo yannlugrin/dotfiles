@@ -1,11 +1,17 @@
+function project_name() {
+  name=$(pwd | sed -n 's:\(^.*/[^/]*/[^/]*\).*$:\1:p' | tr -d '.' | awk -F/ '{print $(NF-1) "/" $(NF)}' | tr '/' '_')
+  if [ -z "$name" ]; then
+    name='default'
+  fi
+
+  echo "$name"
+}
+
 function goto () {
   working_directory=$1
   cd $working_directory
 
-  session_name=`pwd | sed -n 's:\(^.*/[^/]*/[^/]*\).*$:\1:p' | tr -d '.' | awk -F/ '{print $(NF-1) "/" $(NF)}'`
-  if [ -z "$session_name" ]; then
-    session_name='default'
-  fi
+  session_name=$(project_name)
 
   # test if session exist
   tmux has-session -t $session_name &> /dev/null

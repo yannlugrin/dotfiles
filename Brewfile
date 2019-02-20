@@ -2,6 +2,8 @@ brew tap homebrew/versions
 brew tap thoughtbot/formulae
 
 brew install cmake
+brew install docker-compose-completion
+brew install editorconfig
 brew install git
 brew install nvm
 brew install rbenv

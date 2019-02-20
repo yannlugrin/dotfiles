@@ -55,19 +55,13 @@ export VISUAL=vim
 export EDITOR=$VISUAL
 
 # rbenv
-export PATH="$HOME/.rbenv/bin:$PATH"
-eval "$(rbenv init -)"
-
-# brew python install
-export PATH="/usr/local/opt/python/libexec/bin:$PATH"
-export PATH="$HOME/Library/Python/2.7/bin:$PATH"
-
-export WORKON_HOME=$HOME/.virtualenvs
-export PROJECT_HOME=$HOME/Development
-[ -f /usr/local/bin/virtualenvwrapper.sh ] && source /usr/local/bin/virtualenvwrapper.sh
+if [ -d $HOME/.rbenv ]; then
+  export PATH="$HOME/.rbenv/bin:$PATH"
+  eval "$(rbenv init -)"
+fi
 
 # travis
-[ -f /Users/yannlugrin/.travis/travis.sh ] && source /Users/yannlugrin/.travis/travis.sh
+[ -f $HOME/.travis/travis.sh ] && source $HOME/.travis/travis.sh
 
 # Dotfiles scripts
 export PATH="$HOME/.dotfiles/bin:$PATH"
@@ -77,6 +71,7 @@ export PATH="$HOME/bin:$PATH"
 
 # repository bin - mkdir .git/safe in the root of repositories you trust
 export PATH=".git/safe/../../bin:$PATH"
+export PATH=".git/safe/../../vendor/bin:$PATH"
 export PATH=".git/safe/../../node_modules/.bin:$PATH"
 
 # aliases

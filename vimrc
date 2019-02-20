@@ -8,12 +8,15 @@ let mapleader = ","
 set nobackup
 set nowritebackup
 set swapfile
-set directory=~/.vim/swap                     " where to put swap files.
+set directory^=~/.vim/swap//                  " where to put swap files.
 
 "" Load plugins bundle
 if filereadable(expand("~/.vimrc.bundles"))
   source ~/.vimrc.bundles
 endif
+
+"" Match filetype
+filetype plugin indent on
 
 "" Basic styles
 syntax enable                                 " syntax highlighting on
@@ -52,17 +55,31 @@ set ignorecase                                " searches are case insensitive...
 set smartcase                                 " ... unless they contain at least one capital letter
 nnoremap <CR> :nohlsearch<CR>                 " clear the search buffer when hitting return
 
+"" Past
+set pastetoggle=<F2>
+
+"" Color scheme
+set background=dark
+let g:solarized_termcolors=256
+colorscheme solarized
+
 "" Command-T
 let g:CommandTAcceptSelectionSplitMap = ['<C-c>']
 let g:CommandTCancelMap = ['<C-x>']
-let g:CommandTWildIgnore=&wildignore . ",bower_components,node_modules,vendor,tmp,.git,__pycache__"
+let g:CommandTWildIgnore=&wildignore
+let g:CommandTWildIgnore.=',*/.git'
+let g:CommandTWildIgnore.=',*/bower_components'
+let g:CommandTWildIgnore.=',*/node_modules'
+let g:CommandTWildIgnore.=',*/vendor'
+let g:CommandTWildIgnore.=',*/tmp'
+let g:CommandTWildIgnore.=',*/web/core'
 let g:CommandTScanDotDirectories = 1
 let g:CommandTAlwaysShowDotFiles = 1
 
-"" Turbux
-let g:vroom_use_vimux       = 1
-let g:vroom_use_bundle_exec = 0
-let g:vroom_use_binstubs    = 0
+nnoremap <silent> <Leader>m :CommandT web/modules/custom<CR>
+
+"" vim-commenting
+autocmd FileType php setlocal commentstring=//\ %s
 
 "" Vimux
 let g:VimuxRunnerType     = 'pane'
@@ -70,19 +87,18 @@ let g:VimuxUseNearest     = 1
 let g:VimuxOrientation    = 'v'
 let g:VimuxHeight         = '20'
 
-"" Length Matter
-let g:lengthmatters_excluded        = ['help', 'GoToFile', 'nerdtree']
-let g:lengthmatters_start_at_column = 101
+"" UltiSnips
+let g:UltiSnipsExpandTrigger="<c-e>"
+let g:UltiSnipsJumpForwardTrigger="<c-e>"
+let g:UltiSnipsJumpBackwardTrigger="<c-b>"
 
-"" Color scheme
-set background=dark
-let g:solarized_termcolors=256
-colorscheme solarized
+"" PHPActor
+" Include use statement
+nmap <Leader>u :call phpactor#UseAdd()<CR>
+" Invoke the context menu
+nmap <Leader>mm :call phpactor#ContextMenu()<CR>
 
-"" Match filetype
-filetype plugin indent on
-
-"" ToggleMovement
+"" ToggleMovement, to toggle 2 mapping
 function! ToggleMovement(firstOp, thenOp)
   let pos = getpos('.')
   execute "normal! " . a:firstOp
