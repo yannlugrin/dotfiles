@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-docker kill $(docker ps -a -q)
-docker prune --all
-docker volume rm $(docker volume ls -q)
+docker system prune -f
+docker volume ls -q | grep -v "_" | xargs docker volume rm
+docker rm $(docker images -f "dangling=true" -q)
