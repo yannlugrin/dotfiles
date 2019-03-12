@@ -50,3 +50,7 @@ function dotfiles () {
 function dev () {
   goto `pwd`
 }
+
+function exit-session () {
+  tmux kill-session -t $(project_name)
+}

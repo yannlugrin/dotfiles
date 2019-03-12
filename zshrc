@@ -60,9 +60,6 @@ if [ -d $HOME/.rbenv ]; then
   eval "$(rbenv init -)"
 fi
 
-# travis
-[ -f $HOME/.travis/travis.sh ] && source $HOME/.travis/travis.sh
-
 # Dotfiles scripts
 export PATH="$HOME/.dotfiles/bin:$PATH"
 
