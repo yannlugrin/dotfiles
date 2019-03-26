@@ -23,6 +23,9 @@ function docker-compose-shell () {
 alias dcshell="docker-compose-shell"
 compdef _docker_compose dcshell="docker-compose exec"
 
+alias dcup="docker-compose -p $(project_name) up -d"
+compdef _docker_compose dcup=docker-compose
+
 # Git
 alias g='git'
 compdef _git g=git

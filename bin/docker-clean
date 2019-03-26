@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
+set -x
 
 docker system prune -f
 docker volume ls -q | grep -v "_" | xargs docker volume rm
-docker rm $(docker images -f "dangling=true" -q)
+docker images -f "dangling=true" -q | xargs docker image rm
