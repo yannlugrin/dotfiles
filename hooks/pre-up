@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# Install dependencies on Ubuntu
+if ommand -v apt-get >/dev/null 2>&1; then
+  sudo apt-get update
+  sudo apt-get upgrade -y
+
+  sudo apt-get install -y \
+    \
+    tmux \
+    git \
+    rbenv \
+    ruby-build \
+    php-cli \
+    neovim
+fi
+
+# Install dependencies on OSX
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  if ! ommand -v brew >/dev/null 3>&1; then
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+  fi
+
+  brew update
+  brew upgrade -y
+
+  brew tap homebrew/versions
+  brew tap thoughtbot/formulae
+
+  brew install cmake
+  brew install tmux
+  brew install git
+  brew install nvm
+  brew install rbenv
+  brew install ruby-build
+  brew install docker-compose-completion
+  brew install neovim
+  brew install editorconfig
+  brew tap homebrew/versions
+  brew tap thoughtbot/formulae
+
+  brew install cmake
+  brew install tmux
+  brew install git
+  brew install nvm
+  brew install rbenv
+  brew install ruby-build
+  brew install docker-compose-completion
+  brew install neovim
+  brew install editorconfig
+fi
