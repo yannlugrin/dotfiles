@@ -70,6 +70,9 @@ export PATH="$HOME/.dotfiles/bin:$PATH"
 # Home bins
 export PATH="$HOME/bin:$PATH"
 
+# Composer global bin
+export PATH="$HOME/.composer/vendor/bin:$PATH"
+
 # repository bin - mkdir .git/safe in the root of repositories you trust
 export PATH=".git/safe/../../bin:$PATH"
 export PATH=".git/safe/../../vendor/bin:$PATH"
