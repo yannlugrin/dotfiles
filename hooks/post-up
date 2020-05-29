@@ -10,7 +10,7 @@ fi
 
 # Install neovim plugins
 nvim -u $HOME/.dotfiles/config/nvim/plugins.vim +PlugUpgrade +qa
-nvim -u $HOME/.dotfiles/config/nvim/plugins.vim +PlugUdate +qa
+nvim -u $HOME/.dotfiles/config/nvim/plugins.vim +PlugUpdate +qa
 
 # Install rbenv plugins
 if command -v rbenv >/dev/null 2>&1; then
