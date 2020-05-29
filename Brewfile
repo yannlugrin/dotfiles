@@ -13,3 +13,4 @@ brew install rcm
 brew install ruby-build
 brew install tmux
 brew install vim
+brew install neovim

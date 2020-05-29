@@ -1,40 +1,8 @@
 #!/bin/sh
 
-# Ensure global VIM's swap directory exists
-mkdir -p $HOME/.vim/swap
-
-# Install Vundle plugin for VIM, then load vundle rc file and install
-# all plugins
-if [ ! -e $HOME/.vim/bundle/Vundle.vim ]; then
-  git clone https://github.com/gmarik/Vundle.vim.git $HOME/.vim/bundle/Vundle.vim
-fi
-vim -u $HOME/.vimrc.bundles +PluginInstall +qa
-
-# compile Comman-T VIM plugin
-if [ -e $HOME/.vim/bundle/command-t/ruby/command-t ]; then
-  (
-    cd $HOME/.vim/bundle/command-t/ruby/command-t/ext/command-t
-    make clean
-    /usr/local/opt/ruby/bin/ruby extconf.rb
-    make
-  )
-fi
-
-# compile YouCompleteMe VIM plugin
-if [ -e $HOME/.vim/bundle/YouCompleteMe ]; then
-  (
-    cd $HOME/.vim/bundle/YouCompleteMe
-    sh install.sh --clang-completer
-  )
-fi
-
-# Complete phpactor VIM plugin installation
-if [ -e $HOME/.vim/bundle/phpactor ]; then
-  (
-    cd $HOME/.vim/bundle/phpactor
-    composer install
-  )
-fi
+# Install neovim plugins
+nvim -u $HOME/.dotfiles/config/nvim/plugins.vim +PlugUpgrade +qa
+nvim -u $HOME/.dotfiles/config/nvim/plugins.vim +PlugUdate +qa
 
 # Ensure zsh directory exists
 mkdir -p $HOME/.zsh

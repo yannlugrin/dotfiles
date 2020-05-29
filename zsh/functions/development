@@ -26,7 +26,7 @@ function goto () {
 
     # create another window with Vim
     tmux new-window -t $session_name -n editor
-    tmux send-keys -t $session_name 'vim' C-m
+    tmux send-keys -t $session_name 'nvim' C-m
 
     # select pane
     tmux select-window -t $session_name:1
