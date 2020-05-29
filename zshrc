@@ -8,6 +8,10 @@ export ZSH=$HOME/.zsh
 # ZSH theme
 ZSH_THEME="yannlugrin"
 
+# Locale
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+
 # load auto completion from homebrew pacakge
 if [ -d /usr/local/share/zsh/site-functions ]; then
   fpath=(/usr/local/share/zsh/site-functions $fpath)
