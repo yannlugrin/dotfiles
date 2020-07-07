@@ -61,7 +61,11 @@ catch
   echo 'Solarized not installed. It should work after running :PlugInstall'
 endtry
 
-" === Denite setup ==="
+" === Windows specific config === "
+" Avoid mswin.vim making Ctrl-v act as paste
+noremap <C-V> <C-V>
+
+" === Denite setup === "
 try
 " Use ripgrep for searching current directory for files
 " By default, ripgrep will respect rules in .gitignore
