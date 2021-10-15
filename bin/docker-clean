@@ -1,31 +1,32 @@
 #!/usr/bin/env bash
-set -x
+(
+  since=$((4*7*24))
 
-docker system prune -f
-docker volume ls -q | grep -v "_" | xargs docker volume rm
-docker images -f "dangling=true" -q | xargs docker image rm
+  for image in $(docker image ls --format "{{.Repository}}:{{.Tag}}" | grep -v "\<none\>"); do
+    image=${image%":latest"}
 
-# (
-#   set +x
+    echo "-----------------------------------------------"
+    echo "Check $image usage in last $since hours"
+    usage=$(docker events --since "${since}h" --until "0m" --filter="image=$image" --filter="type=container" --format "{{.From}}")
+    running=$(docker ps --format "{{.Image}}" | grep $image)
 
-#   since=$((4*7*24))
-#   since=24
+    if [ -n "$usage" ] || [ -n "$running" ]; then
+      echo "$image used - skipped."
+    else
+      echo "$image not used - remove..."
+      docker image rm "$image"
+    fi
 
-#   for image in $(docker image ls --format "{{.Repository}}:{{.Tag}}" | grep -v "\<none\>"); do
-#     echo "-----------------------------------------------"
-#     echo "Check start events for $image since $sinceh"
-#     output=$(docker events --since "${since}h" --until "0m" --filter="image=$image" --filter="type=container" --format "{{.From}}")
+    echo ""
+  done
 
-#     echo "$output"
-#     if [ ! -z "$output" ]; then
-#       echo "$image used - skipped."
-#     else
-#       echo "$image not used - remove..."
-#     fi
-
-#     echo ""
-#     echo ""
-#     echo ""
-#     echo ""
-#   done
-# )
+  echo "-----------------------------------------------"
+  echo "Cleanup system and remaining not used stuff..."
+  docker system prune -f
+  if [ -n "$(docker volume ls -q | grep -v "_")" ]; then
+    docker volume ls -q | grep -v "_" | xargs docker volume rm
+  fi
+  if [ -n "$(docker images -f "dangling=true" -q)" ]; then
+    docker images -f "dangling=true" -q | xargs docker image rm
+  fi
+)
