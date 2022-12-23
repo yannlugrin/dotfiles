@@ -23,8 +23,8 @@
   echo "-----------------------------------------------"
   echo "Cleanup system and remaining not used stuff..."
   docker system prune -f
-  if [ -n "$(docker volume ls -q | grep -v "_")" ]; then
-    docker volume ls -q | grep -v "_" | xargs docker volume rm
+  if [ -n "$(docker volume ls -q | grep -v "-" | grep -v "_")" ]; then
+    docker volume ls -q | grep -v "-" | grep -v "_" | xargs docker volume rm
   fi
   if [ -n "$(docker images -f "dangling=true" -q)" ]; then
     docker images -f "dangling=true" -q | xargs docker image rm

@@ -8,7 +8,7 @@
   st = status
   lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
   trust = !mkdir -p "$(git rev-parse --show-toplevel)/.git/safe" && echo "git repository is safe"
-  bprune = !git branch --merged | grep -v '\\(master\\|dev\\|staging\\|production\\|stable\\)$\\|\\*' | xargs -n 1 git branch -d
+  bprune = !git branch --merged | grep -v '\\(mains\\|master\\|dev\\|staging\\|production\\|stable\\)$\\|\\*' | xargs -n 1 git branch -d
   ignored = ls-files . --ignored --exclude-standard --others
 
 [color]
@@ -38,3 +38,7 @@
   clean = git-lfs clean %f
   smudge = git-lfs smudge %f
   required = true
+[init]
+	defaultBranch = main
+[gpg]
+	program = gpg

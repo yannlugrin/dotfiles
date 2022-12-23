@@ -11,3 +11,5 @@ bundle
 log
 tmp
 drupal-private-files
+
+.solargraph.yml

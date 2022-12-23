@@ -8,23 +8,26 @@ alias la='ls -al'
 alias -g G='| grep'
 alias -g M='| less'
 
-
 # Docker
-alias dc="docker-compose -p $(project_name)"
-compdef _docker_compose dc=docker-compose
-alias dce="docker-compose -p $(project_name) exec"
-compdef _docker_compose dce="docker-compose exec"
-alias dcb="docker-compose -p $(project_name) build"
-compdef _docker_compose dcb="docker-compose build"
+alias dc="docker compose -p $(project_name)"
+compdef _docker_compose dc=docker compose
+alias dce="docker compose -p $(project_name) exec"
+compdef _docker_compose dce="docker compose exec"
+alias dcb="docker compose -p $(project_name) build"
+compdef _docker_compose dcb="docker compose build"
 
 function docker-compose-shell () {
-  docker-compose -p $(project_name) exec $1 bash
+  docker compose -p $(project_name) exec $1 bash
 }
 alias dcshell="docker-compose-shell"
-compdef _docker_compose dcshell="docker-compose exec"
+compdef _docker_compose dcshell="docker compose exec"
 
-alias dcup="docker-compose -p $(project_name) up -d"
-compdef _docker_compose dcup=docker-compose
+alias dcup="docker compose -p $(project_name) up -d"
+compdef _docker_compose dcup=docker compose
+
+alias dclean="docker-clean"
+
+alias cap="bundle exec cap"
 
 # Git
 alias g='git'

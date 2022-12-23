@@ -4,6 +4,7 @@
 autoload colors; colors;
 export LSCOLORS="Gxfxcxdxbxegedabagacad"
 setopt promptsubst
+unsetopt beep
 
 # custom path with project and relative root
 function custom_path {

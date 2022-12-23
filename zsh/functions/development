@@ -1,5 +1,5 @@
 function project_name() {
-  name=$(pwd | sed -n 's:\(^.*/[^/]*/[^/]*\).*$:\1:p' | tr -d '.' | awk -F/ '{print $(NF-1) "/" $(NF)}' | tr '/' '_')
+  name=$(pwd | sed -n 's:\(^.*/[^/]*/[^/]*\).*$:\1:p' | tr -d '.' | awk -F/ '{print $(NF-1) "/" $(NF)}' | tr '/' '-')
   if [ -z "$name" ]; then
     name='default'
   fi
@@ -23,10 +23,6 @@ function goto () {
     # split first window
     tmux split-window -t $session_name -v -p 50 -d
     tmux split-window -t $session_name -h -p 50 -d
-
-    # create another window with Vim
-    tmux new-window -t $session_name -n editor
-    tmux send-keys -t $session_name 'nvim' C-m
 
     # select pane
     tmux select-window -t $session_name:1
