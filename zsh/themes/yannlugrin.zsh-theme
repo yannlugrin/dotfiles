@@ -42,7 +42,7 @@ function fetch_git_repository {
   # Fetch origin
   if [[ $SECONDS -ge $((_ZSH_THEME_GIT_FETCH_SINCE + ZSH_THEME_GIT_FETCH_INTERVAL)) ]]; then
     _ZSH_THEME_GIT_FETCH_SINCE=$SECONDS
-    git fetch -q > /dev/null 2>&1 || return 1
+    git remote update --prune > /dev/null 2>&1 || return 1
   fi
 }
 _ZSH_THEME_GIT_FETCH_SINCE=0
