@@ -68,7 +68,7 @@ fi
 export PATH="$HOME/.dotfiles/bin:$PATH"
 
 # Home bins
-export PATH="$HOME/bin:$PATH"
+export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
 
 # Composer global bin
 export PATH="$HOME/.composer/vendor/bin:$PATH"
