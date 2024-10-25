@@ -90,3 +90,10 @@ done
 if [ -f "$ZSH/themes/$ZSH_THEME.zsh-theme" ]; then
   source "$ZSH/themes/$ZSH_THEME.zsh-theme"
 fi
+
+# bun completions
+[ -s "/home/yann/.bun/_bun" ] && source "/home/yann/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
