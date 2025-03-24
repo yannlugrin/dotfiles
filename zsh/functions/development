@@ -1,3 +1,5 @@
+#!/bin/env zsh
+
 function project_name() {
   name=$(pwd | sed -n 's:\(^.*/[^/]*/[^/]*\).*$:\1:p' | tr -d '.' | awk -F/ '{print $(NF-1) "/" $(NF)}' | tr '/' '-')
   if [ -z "$name" ]; then
@@ -7,46 +9,11 @@ function project_name() {
   echo "$name"
 }
 
-function goto () {
+function dev() {
   working_directory=$1
   cd $working_directory
-
-  session_name=$(project_name)
-
-  # test if session exist
-  tmux has-session -t $session_name &> /dev/null
-  # and create it if not
-  if [ $? -ne 0 ]; then
-    # create session and go to working directory
-    TMUX= tmux new-session -s $session_name -n console -d
-
-    # split first window
-    tmux split-window -t $session_name -v -p 50 -d
-    tmux split-window -t $session_name -h -p 50 -d
-
-    # select pane
-    tmux select-window -t $session_name:1
-    tmux select-pane -t $session_name -D
-  fi
-
-  # go back
-  cd -
-
-  # attach to session
-  tmux switch-client -t $session_name &> /dev/null
-  if [ $? -ne 0 ]; then
-    tmux attach -t $session_name
-  fi
 }
 
-function dotfiles () {
-  goto ~/.dotfiles
-}
-
-function dev () {
-  goto `pwd`
-}
-
-function exit-session () {
-  tmux kill-session -t $(project_name)
+function dotfiles() {
+  dev ~/.dotfiles
 }

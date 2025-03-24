@@ -1,17 +1,5 @@
 #!/bin/sh
 
-# Install tmux plugins manager
-if [ ! -e ~/.tmux/plugins/tpm ]; then
-  git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-fi
-~/.tmux/plugins/tpm/bin/install_plugins
-~/.tmux/plugins/tpm/bin/update_plugins all
-~/.tmux/plugins/tpm/bin/clean_plugins
-
-# Install neovim plugins
-nvim -u $HOME/.dotfiles/config/nvim/plugins.vim +PlugUpgrade +qa
-nvim -u $HOME/.dotfiles/config/nvim/plugins.vim +PlugUpdate +qa
-
 # Install rbenv plugins
 if command -v rbenv >/dev/null 2>&1; then
   mkdir -p "$(rbenv root)/plugins"
