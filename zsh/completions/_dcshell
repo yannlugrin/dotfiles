@@ -1,0 +1,11 @@
+#compdef dcshell
+compdef _dcshell dcshell
+
+function _dcshell() {
+  local state
+  local -a args
+
+  _arguments \
+    '1:service:_docker_compose_services' \
+    '*::args:_nothing'
+}
