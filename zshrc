@@ -91,6 +91,10 @@ fi
 # bun completions
 [ -s "/home/yann/.bun/_bun" ] && source "/home/yann/.bun/_bun"
 
+
+# Composer
+export PATH="$(composer global config bin-dir --absolute --quiet):$PATH"
+
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
