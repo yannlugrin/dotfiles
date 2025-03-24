@@ -1,0 +1,8 @@
+#!/bin/env zsh
+
+function dccpdb() {
+    local file=$1
+    local container=$2
+
+    dc cp $file $container:/var/backups/db-dump.sql
+}

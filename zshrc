@@ -12,13 +12,10 @@ ZSH_THEME="yannlugrin"
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 
-# load auto completion from homebrew pacakge
-if [ -d /usr/local/share/zsh/site-functions ]; then
-  fpath=(/usr/local/share/zsh/site-functions $fpath)
+# Load custom autocompletions
+if [ -d $ZSH/completions ]; then
+  fpath=($ZSH/completions $fpath)
 fi
-
-# load our own completion functions
-fpath=($ZSH/completion $fpath)
 
 # completion
 autoload -U compinit
