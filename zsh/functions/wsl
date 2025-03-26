@@ -1,0 +1,11 @@
+#!/bin/env zsh
+
+function open() {
+    if [ $# -eq 0 ]; then
+        wslview $(pwd) 2&>/dev/null
+    else
+        for arg in "$@"; do
+            wslview "$arg" 2&>/dev/null
+        done
+    fi
+}

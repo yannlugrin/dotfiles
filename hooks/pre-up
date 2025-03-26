@@ -12,5 +12,6 @@ if command -v apt-get >/dev/null 2>&1; then
     ruby-build \
     php-cli \
     python3-pip \
-    ripgrep
+    ripgrep \
+    wslu
 fi
