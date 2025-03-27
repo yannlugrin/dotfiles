@@ -9,3 +9,26 @@ function open() {
         done
     fi
 }
+
+github() {
+  if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+    echo "Not in a git repository"
+    return 1
+  fi
+
+  # Get the remote origin URL
+  local remote_url=$(git config --get remote.origin.url)
+
+  if [[ -z "$remote_url" ]]; then
+    echo "No remote origin found"
+    return 1
+  fi
+
+  if [[ "$remote_url" == git@* ]]; then
+    remote_url=$(echo "$remote_url" | sed -E 's|git@([^:]+):|https://\1/|' | sed 's|\.git$||')
+  elif [[ "$remote_url" == https://* ]]; then
+    remote_url=$(echo "$remote_url" | sed 's|\.git$||')
+  fi
+
+  open "$remote_url"
+}
