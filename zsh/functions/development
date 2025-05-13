@@ -9,6 +9,10 @@ function project_name() {
   echo "$name"
 }
 
+function _docker_backend_service() {
+    docker compose config --services 2>/dev/null | grep -E '(dev|backend)'  | tr '\n' ' ' | sed 's/ $//'
+}
+
 function dev() {
   local target_dir="${HOME}/Development"
 
@@ -29,4 +33,16 @@ function dev() {
 
 function dotfiles() {
   cd ~/.dotfiles
+}
+
+function drush() {
+    docker compose  -p $(project_name) exec $(_docker_backend_service) ./vendor/bin/drush "$@"
+}
+
+function docker-as-drupal() {
+    docker compose  -p $(project_name) exec $(_docker_backend_service) docker-as-drupal "$@"
+}
+
+function docker-as-wordpress() {
+    docker compose  -p $(project_name) exec $(_docker_backend_service) docker-as-wordpress "$@"
 }

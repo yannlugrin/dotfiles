@@ -30,5 +30,14 @@ github() {
     remote_url=$(echo "$remote_url" | sed 's|\.git$||')
   fi
 
+  # Check if this is a GitHub repository
+  if [[ "$remote_url" == *github.com* ]]; then
+    local branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+
+    if [[ -n "$branch" ]]; then
+      remote_url="${remote_url}/tree/${branch}"
+    fi
+  fi
+
   open "$remote_url"
 }

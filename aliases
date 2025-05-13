@@ -8,6 +8,8 @@ alias la='ls -al'
 alias -g G='| grep'
 alias -g M='| less'
 
+alias op="op.exe"
+
 #alias composer='docker run -u $(id -u):$(id -g) --rm -it -v $(pwd):/app -v ${COMPOSER_HOME:-$HOME/.composer}:/tmp composer'
 
 # Docker
