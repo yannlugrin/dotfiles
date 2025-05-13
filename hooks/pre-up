@@ -7,11 +7,13 @@ if command -v apt-get >/dev/null 2>&1; then
 
   sudo apt-get install -y \
     \
+    composer \
     git \
     rbenv \
     ruby-build \
     php-cli \
     python3-pip \
     ripgrep \
-    wslu
+    wsl \
+    zsh
 fi
