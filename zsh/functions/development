@@ -46,3 +46,7 @@ function docker-as-drupal() {
 function docker-as-wordpress() {
     docker compose  -p $(project_name) exec $(_docker_backend_service) docker-as-wordpress "$@"
 }
+
+function wp() {
+    docker compose  -p $(project_name) exec $(_docker_backend_service) wp "$@"
+}
