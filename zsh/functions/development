@@ -10,7 +10,7 @@ function project_name() {
 }
 
 function _docker_backend_service() {
-    docker compose config --services 2>/dev/null | grep -E '(dev|backend)'  | tr '\n' ' ' | sed 's/ $//'
+  docker compose config --services 2>/dev/null | grep -E '(dev|backend)'  | tr '\n' ' ' | sed 's/ $//'
 }
 
 function dev() {
@@ -36,33 +36,33 @@ function dotfiles() {
 }
 
 function drush() {
-    docker compose  -p $(project_name) exec $(_docker_backend_service) ./vendor/bin/drush "$@"
+  docker compose  -p $(project_name) exec $(_docker_backend_service) ./vendor/bin/drush "$@"
 }
 
 function docker-as-drupal() {
-    docker compose  -p $(project_name) exec $(_docker_backend_service) docker-as-drupal "$@"
+  docker compose  -p $(project_name) exec $(_docker_backend_service) docker-as-drupal "$@"
 }
 
 function docker-as-wordpress() {
-    docker compose  -p $(project_name) exec $(_docker_backend_service) docker-as-wordpress "$@"
+  docker compose  -p $(project_name) exec $(_docker_backend_service) docker-as-wordpress "$@"
 }
 
 function wp() {
-    docker compose  -p $(project_name) exec $(_docker_backend_service) wp "$@"
+  docker compose  -p $(project_name) exec $(_docker_backend_service) wp "$@"
 }
 
 function php-cs-fixer() {
-  if [[ -d "tools/php-cs-fixer" ]]; then
-    (
-      cd tools/php-cs-fixer
-      composer install
-    )
+if [[ -d "tools/php-cs-fixer" ]]; then
+  (
+    cd tools/php-cs-fixer
+    composer install
+  )
 
-    ./tools/php-cs-fixer/vendor/bin/php-cs-fixer "$@"
-    return
-  fi
+  ./tools/php-cs-fixer/vendor/bin/php-cs-fixer "$@"
+  return
+fi
 
-  echo "./tools/php-cs-fixer do not exist"
+echo "./tools/php-cs-fixer do not exist"
 }
 
 function phpcs() {

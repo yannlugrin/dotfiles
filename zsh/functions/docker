@@ -2,26 +2,26 @@
 
 # Helper function to get Docker Compose service names
 function _docker_compose_services() {
-    local -a services
+  local -a services
 
-    services=($(docker compose config --services 2>/dev/null))
+  services=($(docker compose config --services 2>/dev/null))
 
-    if (( ${#services} > 0 )); then
-        _describe 'Docker Compose services' services
-    fi
+  if (( ${#services} > 0 )); then
+    _describe 'Docker Compose services' services
+  fi
 }
 
 # Command to load database file as database dump in docker development environment.
 function dccpdb() {
-    local file=$1
-    local service=$2
+  local file=$1
+  local service=$2
 
-    docker compose  -p $(project_name) cp $file $service:/var/backups/db-dump.sql
+  docker compose  -p $(project_name) cp $file $service:/var/backups/db-dump.sql
 }
 
 # Command to run a shell in a docker development environment.
 function dcshell() {
-    local service=$1
+  local service=$1
 
-    docker compose  -p $(project_name) exec $service bash
+  docker compose  -p $(project_name) exec $service bash
 }
