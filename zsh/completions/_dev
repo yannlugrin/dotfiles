@@ -4,11 +4,11 @@ compdef _dev dev
 function _dev() {
     local base_dir="${HOME}/Development"
     local state
-    
+
     _arguments \
         '1: :->client' \
         '2: :->project'
-    
+
     case $state in
         client)
             if [[ -d "$base_dir" ]]; then

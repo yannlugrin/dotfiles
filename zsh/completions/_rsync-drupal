@@ -1,0 +1,19 @@
+#compdef rsync-drupal
+compdef _rsync-drupal rsync-drupal
+
+function _rsync-drupal() {
+  local state
+  
+  _arguments \
+    '1:remote path:->rfile' && return 0
+  
+  case $state in
+    rfile)
+      if compset -P 1 '*:'; then
+        _remote_files -- ssh && return 0
+      else
+        _ssh_hosts -r: -S: && return 0
+      fi
+      ;;
+  esac
+}

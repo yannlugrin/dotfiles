@@ -1,0 +1,36 @@
+#!/bin/env zsh
+
+function rsync-wp() {
+  local remote=$1
+
+  if [[ $# -ne 1 ]]; then
+    echo "Usage: rsync-wp <remote>" >&2
+    return 1
+  fi
+
+  rsync -av --delete \
+    --exclude="plugins" \
+    --exclude="mu-plugins" \
+    --exclude="themes" \
+    --exclude="languages" \
+    --exclude="uploads/.gitkeep" \
+    --include="languages/themes" \
+    --include="languages/plugins" \
+    $remote/shared/web/app/ web/app
+}
+
+function rsync-drupal() {
+  local remote=$1
+
+  if [[ $# -ne 1 ]]; then
+    echo "Usage: rsync-wp <remote>" >&2
+    return 1
+  fi
+
+  rsync -av --delete \
+    --exclude="styles/" \
+    --exclude="css/" \
+    --exclude="js/" \
+    --exclude="php/" \
+    $remote/shared/web/sites/default/files/ web/sites/default/files
+}
