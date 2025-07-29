@@ -2,14 +2,15 @@
 .com.apple.timemachine.supported
 
 .svn
-.powder
 .bundle
 bundle
 
 .vimrc
+**/*.code-workspace
+
+**/.claude/settings.local.json
 
 log
 tmp
-drupal-private-files
 
 .solargraph.yml
