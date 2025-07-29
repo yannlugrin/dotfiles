@@ -41,3 +41,28 @@ github() {
 
   open "$remote_url"
 }
+
+jira() {
+  # Check if any arguments are provided and open them as JIRA issues
+  for arg in "$@"; do
+    open "https://antistatique.atlassian.net/browse/${arg}"
+  done
+  if [ $# -ne 0 ]; then
+      return
+  fi
+
+  # If no arguments are provided, try to extract the JIRA issue from the current branch
+  if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+    echo "Not in a git repository"
+    return 1
+  fi
+
+  local issue=$(git branch --show-current | sed 's/.*\/\([a-zA-Z]\+-[0-9]\+\).*/\1/')
+
+  if [[ -z "$issue" ]]; then
+    echo "No JIRA issue found in the current branch"
+    return 1
+  fi
+
+  open "https://antistatique.atlassian.net/browse/${issue}"
+}
