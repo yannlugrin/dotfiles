@@ -52,17 +52,24 @@ function wp() {
 }
 
 function php-cs-fixer() {
-if [[ -d "tools/php-cs-fixer" ]]; then
-  (
-    cd tools/php-cs-fixer
-    composer install
-  )
+  if [[ -d "tools/php-cs-fixer" ]]; then
+    (
+      cd tools/php-cs-fixer
+      composer install
+    )
 
-  ./tools/php-cs-fixer/vendor/bin/php-cs-fixer "$@"
-  return
-fi
+    if [[ $# -eq 0 ]] || [[ $# -eq 1 && "$1" == "check" ]]; then
+      ./tools/php-cs-fixer/vendor/bin/php-cs-fixer check --config=.php-cs-fixer.php --using-cache=no
+    elif [[ $# -eq 1 && "$1" == "fix" ]]; then
+      ./tools/php-cs-fixer/vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php --using-cache=no
+    else
+      ./tools/php-cs-fixer/vendor/bin/php-cs-fixer "$@"
+    fi
 
-echo "./tools/php-cs-fixer do not exist"
+    return
+  fi
+
+  echo "./tools/php-cs-fixer do not exist"
 }
 
 function phpcs() {
@@ -81,4 +88,24 @@ function phpcbf() {
   fi
 
   echo "./vendor/bin/phpcbf do not exist"
+}
+
+function psalm() {
+  if [[ -d "tools/psalm" ]]; then
+    (
+      cd tools/psalm
+      composer install
+    )
+
+    if [[ $# -eq 0 ]]; then
+      ./tools/psalm/vendor/bin/psalm --config=psalm.xml --no-cache
+    elif [[ $# -eq 1 && "$1" == "--alter" ]]; then
+      ./tools/psalm/vendor/bin/psalm --config=psalm.xml --no-cache --alter --issues=all
+    else
+      ./tools/psalm/vendor/bin/psalm "$@"
+    fi
+    return
+  fi
+
+  echo "./tools/psalm do not exis"
 }
