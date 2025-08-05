@@ -40,7 +40,13 @@ function drush() {
 }
 
 function docker-as-drupal() {
-  docker compose  -p $(project_name) exec $(_docker_backend_service) docker-as-drupal "$@"
+ local service=$(_docker_backend_service)
+
+  if [[ $# -ne 0 && ( "$1" == "behat" || "$1" == "phpunit" ) ]]; then
+    service="test"
+  fi
+
+  docker compose  -p $(project_name) exec $service docker-as-drupal "$@"
 }
 
 function docker-as-wordpress() {
