@@ -61,6 +61,10 @@ if command -v rbenv >/dev/null 2>&1; then
   eval "$(rbenv init -)"
 fi
 
+# nvm
+export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
 # Dotfiles scripts
 export PATH="$HOME/.dotfiles/bin:$PATH"
 
@@ -90,7 +94,6 @@ fi
 
 # bun completions
 [ -s "/home/yann/.bun/_bun" ] && source "/home/yann/.bun/_bun"
-
 
 # Composer
 export PATH="$(composer global config bin-dir --absolute --quiet):$PATH"
