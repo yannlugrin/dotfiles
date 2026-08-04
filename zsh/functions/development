@@ -14,14 +14,14 @@ function _docker_backend_service() {
 }
 
 function dev() {
-  local target_dir="${HOME}/Development"
+  local target_dir="${HOME}/projects"
 
   if [[ $# -eq 1 ]]; then
-    target_dir="${HOME}/Development/$1"
+    target_dir="${HOME}/projects/$1"
   fi
 
   if [[ $# -eq 2 ]]; then
-    target_dir="${HOME}/Development/$1/$2"
+    target_dir="${HOME}/projects/$1/$2"
   fi
 
   if [[ "$PWD" == "$target_dir" ]]; then

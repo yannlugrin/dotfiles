@@ -2,7 +2,7 @@
 compdef _dev dev
 
 function _dev() {
-    local base_dir="${HOME}/Development"
+    local base_dir="${HOME}/projects"
     local state
 
     _arguments \

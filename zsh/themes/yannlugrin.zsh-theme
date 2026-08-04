@@ -8,7 +8,7 @@ unsetopt beep
 
 # custom path with project and relative root
 function custom_path {
-  local client_project_root=`pwd | sed -n 's:\(^.*/Development/[^/]*/[^/]*\).*$:\1:p'`
+  local client_project_root=`pwd | sed -n 's:\(^.*/projects/[^/]*/[^/]*\).*$:\1:p'`
 
   if [ -n "$client_project_root" ]; then
     local client_project_name=`echo $client_project_root | awk -F/ '{print $(NF-1) "/" $(NF)}'`
