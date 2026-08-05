@@ -18,4 +18,46 @@ fi
 # Ensure zsh directory exists
 mkdir -p $HOME/.zsh
 
+# Install npiperelay on the Windows side, to bridge the Bitwarden SSH agent
+# into WSL. It is the only Windows binary this needs, and is kept under the
+# Windows user profile, out of the WSL filesystem and out of $PATH.
+# See docs/bitwarden-ssh-agent.md
+if [ -n "$WSL_DISTRO_NAME" ] || grep -qi microsoft /proc/version 2>/dev/null; then
+  NPIPERELAY_VERSION="v1.11.4"
+  NPIPERELAY_SHA256="cea82cf5c9c22a28bef8075750acb7958f766393baebff4597cf21442f71c4b3"
+  NPIPERELAY_URL="https://github.com/albertony/npiperelay/releases/download/${NPIPERELAY_VERSION}/npiperelay_windows_amd64.exe"
+
+  # %USERPROFILE% is not exported into WSL, so ask Windows for it. cmd.exe must
+  # start from a Windows-reachable directory or it warns about UNC paths.
+  windows_home=$(cd /mnt/c && cmd.exe /c "echo %USERPROFILE%" 2>/dev/null | tr -d '\r')
+
+  if [ -z "$windows_home" ]; then
+    echo "Could not resolve %USERPROFILE%; skipping npiperelay install." >&2
+  else
+    npiperelay="$(wslpath -u "$windows_home")/.local/bin/npiperelay.exe"
+
+    # Only download when it is missing or not the pinned build
+    if ! echo "$NPIPERELAY_SHA256  $npiperelay" | sha256sum --check --status 2>/dev/null; then
+      echo "Installing npiperelay ${NPIPERELAY_VERSION}..."
+      mkdir -p "$(dirname "$npiperelay")"
+      curl -fsSL "$NPIPERELAY_URL" -o "$npiperelay.tmp"
+
+      if echo "$NPIPERELAY_SHA256  $npiperelay.tmp" | sha256sum --check --status; then
+        mv "$npiperelay.tmp" "$npiperelay"
+        chmod +x "$npiperelay"
+      else
+        rm -f "$npiperelay.tmp"
+        echo "npiperelay checksum mismatch, not installed." >&2
+      fi
+    fi
+
+    # Record the path so the shell can find it without spawning cmd.exe on
+    # every startup
+    if [ -x "$npiperelay" ]; then
+      mkdir -p "$HOME/.config/bitwarden-ssh-agent"
+      echo "$npiperelay" > "$HOME/.config/bitwarden-ssh-agent/npiperelay-path"
+    fi
+  fi
+fi
+
 sudo locale-gen en_US.UTF-8

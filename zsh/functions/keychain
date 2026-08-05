@@ -1,6 +1,16 @@
 #!/bin/env zsh
+#
+# Keep an ssh-agent running and the default key loaded in it, shared by every
+# shell rather than one agent per terminal.
+#
+# Under WSL this is not used at all: the keys live in Bitwarden Desktop and
+# SSH_AUTH_SOCK points at its relay instead. See zsh/functions/bitwarden-ssh-agent.
+
+if [[ -n "$WSL_DISTRO_NAME" ]] || grep -qi microsoft /proc/version 2>/dev/null; then
+  return
+fi
 
 if command -v keychain >/dev/null 2>&1; then
-  /usr/bin/keychain -q $HOME/.ssh/id_ed25519
-  source $HOME/.keychain/$HOST-sh
+  keychain -q "$HOME/.ssh/id_ed25519"
+  source "$HOME/.keychain/$HOST-sh"
 fi

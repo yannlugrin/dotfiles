@@ -1,0 +1,84 @@
+#!/bin/env zsh
+#
+# Use the Bitwarden Desktop SSH agent (running on Windows) from WSL.
+#
+# Bitwarden serves its agent only on the Windows named pipe
+# \\.\pipe\openssh-ssh-agent, which WSL2 cannot reach from its own VM.
+# npiperelay.exe opens that pipe and speaks stdio; socat listens on a Unix
+# socket and hands each connection to it, giving ssh a socket it understands:
+#
+#   Bitwarden -> named pipe -> npiperelay.exe -> socat -> $SSH_AUTH_SOCK -> ssh
+#
+# See docs/bitwarden-ssh-agent.md
+
+# Only relevant under WSL. Elsewhere the keychain function takes over.
+if [[ -n "$WSL_DISTRO_NAME" ]] || grep -qi microsoft /proc/version 2>/dev/null; then
+
+  BITWARDEN_SSH_PIPE="//./pipe/openssh-ssh-agent"
+  BITWARDEN_SSH_SOCK="$HOME/.ssh/bitwarden-agent.sock"
+  BITWARDEN_SSH_PIDFILE="${XDG_RUNTIME_DIR:-/tmp}/bitwarden-ssh-agent.pid"
+  BITWARDEN_SSH_LOG="$HOME/.cache/bitwarden-ssh-agent.log"
+
+  # Written by bin/install-npiperelay. Keeping the path here rather than
+  # deriving it avoids spawning cmd.exe on every shell startup, and keeps the
+  # Windows binary out of $PATH.
+  BITWARDEN_NPIPERELAY="${BITWARDEN_NPIPERELAY:-$(<${HOME}/.config/bitwarden-ssh-agent/npiperelay-path 2>/dev/null)}"
+
+  # True when our socat relay is still alive. Uses only shell builtins and
+  # /proc so that a healthy shell startup costs no forks.
+  _bitwarden_ssh_agent_running() {
+    local pid
+
+    [[ -S "$BITWARDEN_SSH_SOCK" ]] || return 1
+    [[ -r "$BITWARDEN_SSH_PIDFILE" ]] || return 1
+
+    pid="$(<$BITWARDEN_SSH_PIDFILE)"
+    [[ -n "$pid" && -d "/proc/$pid" ]] || return 1
+
+    # Guard against a recycled pid belonging to something else.
+    [[ "$(</proc/$pid/comm)" == socat ]]
+  }
+
+  _bitwarden_ssh_agent_start() {
+    if [[ -z "$BITWARDEN_NPIPERELAY" || ! -x "$BITWARDEN_NPIPERELAY" ]]; then
+      return 1
+    fi
+
+    command -v socat >/dev/null 2>&1 || return 1
+
+    mkdir -p "${BITWARDEN_SSH_SOCK:h}" "${BITWARDEN_SSH_LOG:h}"
+
+    # unlink-early clears a socket left behind by a previous session; mode=600
+    # keeps the agent reachable only by us.
+    socat \
+      UNIX-LISTEN:"$BITWARDEN_SSH_SOCK",fork,unlink-early,mode=600 \
+      EXEC:"$BITWARDEN_NPIPERELAY -ei -s $BITWARDEN_SSH_PIPE",nofork \
+      >>"$BITWARDEN_SSH_LOG" 2>&1 &!
+
+    echo $! > "$BITWARDEN_SSH_PIDFILE"
+  }
+
+  # Restart the relay. Needed after Bitwarden Desktop restarts, which drops the
+  # pipe and leaves the agent unresponsive until the bridge is rebuilt.
+  bitwarden-ssh-agent() {
+    if [[ -r "$BITWARDEN_SSH_PIDFILE" ]]; then
+      kill "$(<$BITWARDEN_SSH_PIDFILE)" 2>/dev/null
+      rm -f "$BITWARDEN_SSH_PIDFILE"
+    fi
+
+    rm -f "$BITWARDEN_SSH_SOCK"
+
+    if _bitwarden_ssh_agent_start; then
+      echo "Bitwarden SSH agent relay started on $BITWARDEN_SSH_SOCK"
+      ssh-add -l
+    else
+      echo "Could not start the relay. Check that socat and npiperelay are" >&2
+      echo "installed (see docs/bitwarden-ssh-agent.md), then retry." >&2
+      return 1
+    fi
+  }
+
+  _bitwarden_ssh_agent_running || _bitwarden_ssh_agent_start
+
+  export SSH_AUTH_SOCK="$BITWARDEN_SSH_SOCK"
+fi

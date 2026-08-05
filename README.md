@@ -51,7 +51,11 @@ config): http://ethanschoonover.com/solarized.
 More informations about my config
 ---------------------------------
 
-Coming soon (or maybe later).
+- [Bitwarden SSH agent on WSL](docs/bitwarden-ssh-agent.md): use SSH keys
+  stored in Bitwarden from WSL, without keeping private keys on disk. Requires
+  a few manual steps on the Windows side.
+
+More coming soon (or maybe later).
 
 License
 -------
