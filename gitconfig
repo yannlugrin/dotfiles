@@ -1,6 +1,6 @@
 [user]
   name = Yann Lugrin
-  email = yann.lugrin@antistatique.net
+  email = yann.lugrin@sans-savoir.net
 
 [alias]
   co = checkout
@@ -44,6 +44,6 @@
   smudge = git-lfs smudge %f
   required = true
 [init]
-	defaultBranch = main
+  defaultBranch = main
 [gpg]
-	program = gpg
+  program = gpg
