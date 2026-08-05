@@ -4,22 +4,24 @@ local base_dir="${DEV_BASE_DIR:-$HOME/projects}"
 local state
 
 _arguments \
-  '1: :->client' \
+  '1: :->first' \
   '2: :->project'
 
 case $state in
-  (client)
+  # Namespaces and namespace-less projects share the first level.
+  (first)
     if [[ -d "$base_dir" ]]; then
-      local -a clients
-      clients=( "$base_dir"/*(N/:t) )
-      _describe 'clients' clients
+      local -a entries
+      entries=( "$base_dir"/*(N/:t) )
+      _describe 'namespaces and projects' entries
     fi
     ;;
   (project)
-    local client=$words[2]
-    if [[ -d "$base_dir/$client" ]]; then
+    local namespace=$words[2]
+    # Nothing to complete below a project: only namespaces hold projects.
+    if [[ -d "$base_dir/$namespace" ]] && ! _is_project_dir "$base_dir/$namespace"; then
       local -a projects
-      projects=( "$base_dir/$client"/*(N/:t) )
+      projects=( "$base_dir/$namespace"/*(N/:t) )
       _describe 'projects' projects
     fi
     ;;

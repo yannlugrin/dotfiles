@@ -19,18 +19,49 @@ function is_wsl() {
   (( IS_WSL ))
 }
 
-# Where client projects live, as <base>/<client>/<project>. Used by dev(), its
+# Where projects live, as <base>/<namespace>/<project> or, when a namespace
+# would not carry its weight, as <base>/<project>. Used by dev(), its
 # completion, project_name() and the prompt, so it lives in one place.
 export DEV_BASE_DIR="${DEV_BASE_DIR:-$HOME/projects}"
 
-# Root of the client project containing $1 (default: $PWD), or nothing when we
-# are not inside one.
+# What tells a project directory apart from a namespace directory: every project
+# is a git repository, and a namespace only ever holds project directories. Not
+# -d, so a worktree or submodule .git file counts too.
+function _is_project_dir() {
+  [[ -e "$1/.git" ]]
+}
+
+# Root of the project containing $1 (default: $PWD), or nothing when we are not
+# inside one.
 function _project_root() {
-  local dir="${1:-$PWD}"
+  local dir="${1:-$PWD}" rest first
 
-  [[ "$dir" == "$DEV_BASE_DIR"/*/* ]] || return 1
+  [[ "$dir" == "$DEV_BASE_DIR"/* ]] || return 1
 
-  # Strip everything below <base>/<client>/<project>
-  dir="${dir#$DEV_BASE_DIR/}"
-  print -r -- "$DEV_BASE_DIR/${dir%%/*}/${${dir#*/}%%/*}"
+  rest="${dir#$DEV_BASE_DIR/}"
+  first="${rest%%/*}"
+
+  # <base>/<project> when the first level looks like a project, otherwise it is
+  # a namespace and the project is one level down.
+  if _is_project_dir "$DEV_BASE_DIR/$first"; then
+    print -r -- "$DEV_BASE_DIR/$first"
+    return
+  fi
+
+  # Still inside the namespace itself, so not in a project yet.
+  [[ "$rest" == */* ]] || return 1
+
+  print -r -- "$DEV_BASE_DIR/$first/${${rest#*/}%%/*}"
+}
+
+# Name of the project at root $1, as <namespace><separator><project>, or just
+# <project> when the root sits directly under $DEV_BASE_DIR.
+function _project_label() {
+  local root="$1" separator="$2"
+
+  if [[ "${root:h}" == "$DEV_BASE_DIR" ]]; then
+    print -r -- "${root:t}"
+  else
+    print -r -- "${${root:h}:t}${separator}${root:t}"
+  fi
 }

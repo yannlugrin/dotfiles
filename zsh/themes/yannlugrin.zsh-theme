@@ -18,13 +18,14 @@ ZSH_THEME_GIT_PROMPT_CONFLICT="%{$fg_bold[red]%}⚡"
 # How often the background fetch may run, in seconds.
 ZSH_THEME_GIT_FETCH_INTERVAL=300
 
-# Path shown as [client/project] <path relative to the project root> when we are
-# inside a project, and as the plain zsh %~ otherwise.
+# Path shown as [namespace/project] <path relative to the project root> when we
+# are inside a project, and as the plain zsh %~ otherwise. A project without a
+# namespace shows as [project].
 function custom_path {
   local root=$(_project_root)
 
   if [[ -n "$root" ]]; then
-    echo "[${${root:h}:t}/${root:t}] ${PWD/#$root/~}"
+    echo "[$(_project_label "$root" /)] ${PWD/#$root/~}"
   else
     echo '%~'
   fi

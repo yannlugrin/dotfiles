@@ -1,14 +1,15 @@
 #!/bin/env zsh
 
-# Docker Compose project name for the current directory: <client>-<project>.
-# Derived from the project root, so it stays the same in every subdirectory of
-# a project rather than following the last two path components.
+# Docker Compose project name for the current directory: <namespace>-<project>,
+# or just <project> for a project without a namespace. Derived from the project
+# root, so it stays the same in every subdirectory of a project rather than
+# following the last two path components.
 function project_name() {
   local root=$(_project_root)
   local name
 
   if [[ -n "$root" ]]; then
-    name="${${root:h}:t}-${root:t}"
+    name=$(_project_label "$root" -)
   else
     # Outside DEV_BASE_DIR, fall back to the last two path components, or to
     # the last one alone when the path is too shallow to have two.
