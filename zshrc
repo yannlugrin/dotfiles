@@ -160,3 +160,10 @@ fi
 if [[ -f "$ZSH/themes/$ZSH_THEME.zsh-theme" ]]; then
   source "$ZSH/themes/$ZSH_THEME.zsh-theme"
 fi
+
+###
+### Session status
+###
+
+# Last, so it stays the first thing visible above the prompt.
+docker_status

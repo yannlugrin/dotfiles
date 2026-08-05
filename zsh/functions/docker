@@ -1,5 +1,32 @@
 #!/bin/env zsh
 
+# Whether the docker daemon answers.
+#
+# `docker version` is the cheapest command that talks to the server: with the
+# daemon down the client still exits non-zero, and the same "trust the exit
+# status, not the output" rule as _compose_services applies under WSL.
+function docker_is_running() {
+  (( $+commands[docker] )) || return 1
+
+  docker version --format '{{.Server.Version}}' >/dev/null 2>&1
+}
+
+# One line of docker state, printed at shell start.
+#
+# Interactive shells writing to a terminal only: `zsh -c` and anything reading
+# our stdout must not get this. Silent when docker is not installed at all,
+# there is nothing to report then.
+function docker_status() {
+  [[ -o interactive ]] && [[ -t 1 ]] || return 0
+  (( $+commands[docker] )) || return 0
+
+  if docker_is_running; then
+    print -P '%F{green}docker is running%f'
+  else
+    print -P '%F{red}docker is not running%f'
+  fi
+}
+
 # Every docker compose command in these dotfiles goes through here, so the
 # project name is derived the same way everywhere.
 function _compose() {
