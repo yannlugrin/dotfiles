@@ -1,12 +1,6 @@
 #compdef dccpdb
-compdef _dccpdb dccpdb
 
-function _dccpdb() {
-  local state
-  local -a args
-
-  _arguments \
-    '1:sql dump path:_files' \
-    '2:service:_docker_compose_services' \
-    '*::args:_nothing'
-}
+_arguments \
+  '1:sql dump path:_files' \
+  '2:service:_docker_compose_services' \
+  '*::args:_nothing'

@@ -1,0 +1,60 @@
+#!/bin/env zsh
+#
+# Open the current repository or a JIRA issue in the browser. Platform-agnostic:
+# the platform handling lives in open().
+
+JIRA_BASE_URL="${JIRA_BASE_URL:-https://antistatique.atlassian.net}"
+
+function github() {
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    print -u2 "Not in a git repository"
+    return 1
+  fi
+
+  local remote_url=$(git config --get remote.origin.url)
+
+  if [[ -z "$remote_url" ]]; then
+    print -u2 "No remote origin found"
+    return 1
+  fi
+
+  if [[ "$remote_url" == git@* ]]; then
+    remote_url=$(print -r -- "$remote_url" | sed -E 's|git@([^:]+):|https://\1/|' | sed 's|\.git$||')
+  elif [[ "$remote_url" == https://* ]]; then
+    remote_url=${remote_url%.git}
+  fi
+
+  # Only GitHub has the /tree/<branch> layout; anything else opens at its root.
+  if [[ "$remote_url" == *github.com* ]]; then
+    local branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+    [[ -n "$branch" ]] && remote_url="${remote_url}/tree/${branch}"
+  fi
+
+  open "$remote_url"
+}
+
+function jira() {
+  local arg
+
+  if (( $# )); then
+    for arg in "$@"; do
+      open "${JIRA_BASE_URL}/browse/${arg}"
+    done
+    return
+  fi
+
+  # No argument: take the issue key out of the current branch name.
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    print -u2 "Not in a git repository"
+    return 1
+  fi
+
+  local issue=$(git branch --show-current | sed -n 's/.*\([a-zA-Z]\{1,\}-[0-9]\{1,\}\).*/\1/p')
+
+  if [[ -z "$issue" ]]; then
+    print -u2 "No JIRA issue found in the current branch"
+    return 1
+  fi
+
+  open "${JIRA_BASE_URL}/browse/${issue}"
+}

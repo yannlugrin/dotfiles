@@ -23,7 +23,7 @@ function rsync-drupal() {
   local remote=$1
 
   if [[ $# -ne 1 ]]; then
-    echo "Usage: rsync-wp <remote>" >&2
+    echo "Usage: rsync-drupal <remote>" >&2
     return 1
   fi
 

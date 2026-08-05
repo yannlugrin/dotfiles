@@ -29,7 +29,9 @@
   whitespace = fix
 
 [push]
-  default = upstream
+  # Leaving `default` unset keeps git's own `simple`, which refuses to push when
+  # the local and upstream branch names differ.
+  autoSetupRemote = true
 
 [branch]
   autosetuprebase = always

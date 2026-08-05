@@ -1,0 +1,29 @@
+#compdef docker
+#
+# Shim, not a completion.
+#
+# Docker Desktop's WSL integration installs
+# /usr/share/zsh/vendor-completions/_docker as a symlink into
+# /mnt/wsl/docker-desktop, which only exists while Docker Desktop is running.
+# With Docker stopped the link dangles and compinit fails at every shell start
+# with "no such file or directory".
+#
+# $ZSH/completions comes first in $fpath and compinit keeps only the first file
+# of a given name, so this file shadows that link: compinit reads this one and
+# never touches the broken one. Whether the real completion is available is then
+# decided here, at completion time.
+
+local real
+
+# (N.r) demands a readable regular file, so a dangling symlink is skipped
+# rather than sourced. Our own directory is excluded to avoid finding this file.
+for real in ${^fpath:#$ZSH/completions}/_docker(N.r); do
+  # Docker ships _docker as a file that defines _docker, so sourcing it replaces
+  # this shim and the call below reaches the real implementation.
+  source $real
+  _docker "$@"
+  return
+done
+
+_message -r 'docker is not running'
+return 1

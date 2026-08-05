@@ -1,29 +1,26 @@
 #compdef dev
-compdef _dev dev
 
-function _dev() {
-    local base_dir="${HOME}/projects"
-    local state
+local base_dir="${DEV_BASE_DIR:-$HOME/projects}"
+local state
 
-    _arguments \
-        '1: :->client' \
-        '2: :->project'
+_arguments \
+  '1: :->client' \
+  '2: :->project'
 
-    case $state in
-        client)
-            if [[ -d "$base_dir" ]]; then
-                local -a clients
-                clients=( $(ls -1 "$base_dir") )
-                _describe 'clients' clients
-            fi
-            ;;
-        project)
-            local client=$words[2]
-            if [[ -d "$base_dir/$client" ]]; then
-                local -a projects
-                projects=( $(ls -1 "$base_dir/$client") )
-                _describe 'projects' projects
-            fi
-            ;;
-    esac
-}
+case $state in
+  (client)
+    if [[ -d "$base_dir" ]]; then
+      local -a clients
+      clients=( "$base_dir"/*(N/:t) )
+      _describe 'clients' clients
+    fi
+    ;;
+  (project)
+    local client=$words[2]
+    if [[ -d "$base_dir/$client" ]]; then
+      local -a projects
+      projects=( "$base_dir/$client"/*(N/:t) )
+      _describe 'projects' projects
+    fi
+    ;;
+esac

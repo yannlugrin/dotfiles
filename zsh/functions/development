@@ -1,32 +1,38 @@
 #!/bin/env zsh
 
+# Docker Compose project name for the current directory: <client>-<project>.
+# Derived from the project root, so it stays the same in every subdirectory of
+# a project rather than following the last two path components.
 function project_name() {
-  name=$(pwd | sed -n 's:\(^.*/[^/]*/[^/]*\).*$:\1:p' | tr -d '.' | awk -F/ '{print $(NF-1) "/" $(NF)}' | tr '/' '-')
-  if [ -z "$name" ]; then
-    name='default'
+  local root=$(_project_root)
+  local name
+
+  if [[ -n "$root" ]]; then
+    name="${${root:h}:t}-${root:t}"
+  else
+    # Outside DEV_BASE_DIR, fall back to the last two path components, or to
+    # the last one alone when the path is too shallow to have two.
+    if [[ -n "${${PWD:h}:t}" ]]; then
+      name="${${PWD:h}:t}-${PWD:t}"
+    else
+      name="${PWD:t}"
+    fi
   fi
 
-  echo "$name"
+  print -r -- "${name:-default}"
 }
 
 function _docker_backend_service() {
-  docker compose config --services 2>/dev/null | grep -E '(dev|backend)'  | tr '\n' ' ' | sed 's/ $//'
+  _compose_services | grep -E '(dev|backend)' | tr '\n' ' ' | sed 's/ $//'
 }
 
 function dev() {
-  local target_dir="${HOME}/projects"
+  local target_dir="$DEV_BASE_DIR"
 
-  if [[ $# -eq 1 ]]; then
-    target_dir="${HOME}/projects/$1"
-  fi
+  (( $# >= 1 )) && target_dir="$DEV_BASE_DIR/$1"
+  (( $# >= 2 )) && target_dir="$DEV_BASE_DIR/$1/$2"
 
-  if [[ $# -eq 2 ]]; then
-    target_dir="${HOME}/projects/$1/$2"
-  fi
-
-  if [[ "$PWD" == "$target_dir" ]]; then
-    return
-  fi
+  [[ "$PWD" == "$target_dir" ]] && return
 
   cd "$target_dir"
 }
@@ -36,82 +42,82 @@ function dotfiles() {
 }
 
 function drush() {
-  docker compose  -p $(project_name) exec $(_docker_backend_service) ./vendor/bin/drush "$@"
+  _compose exec "$(_docker_backend_service)" ./vendor/bin/drush "$@"
 }
 
 function docker-as-drupal() {
- local service=$(_docker_backend_service)
+  local service=$(_docker_backend_service)
 
-  if [[ $# -ne 0 && ( "$1" == "behat" || "$1" == "phpunit" ) ]]; then
+  # behat and phpunit belong to the test environment, everything else runs
+  # against the dev backend.
+  if (( $# )) && [[ "$1" == "behat" || "$1" == "phpunit" ]]; then
     service="test"
   fi
 
-  docker compose  -p $(project_name) exec $service docker-as-drupal "$@"
+  _compose exec "$service" docker-as-drupal "$@"
 }
 
 function docker-as-wordpress() {
-  docker compose  -p $(project_name) exec $(_docker_backend_service) docker-as-wordpress "$@"
+  _compose exec "$(_docker_backend_service)" docker-as-wordpress "$@"
 }
 
 function wp() {
-  docker compose  -p $(project_name) exec $(_docker_backend_service) wp "$@"
+  _compose exec "$(_docker_backend_service)" wp "$@"
+}
+
+# Run a tool vendored under tools/<name>, installing it on first use. Both
+# php-cs-fixer and psalm are set up this way.
+function _php_tool() {
+  local name=$1
+  shift
+
+  if [[ ! -d "tools/$name" ]]; then
+    print -u2 "./tools/$name does not exist"
+    return 1
+  fi
+
+  ( cd "tools/$name" && composer install ) || return
+
+  "./tools/$name/vendor/bin/$name" "$@"
+}
+
+# Run a tool installed by the project itself.
+function _vendor_bin() {
+  local name=$1
+  shift
+
+  if [[ ! -x "./vendor/bin/$name" ]]; then
+    print -u2 "./vendor/bin/$name does not exist"
+    return 1
+  fi
+
+  "./vendor/bin/$name" "$@"
 }
 
 function php-cs-fixer() {
-  if [[ -d "tools/php-cs-fixer" ]]; then
-    (
-      cd tools/php-cs-fixer
-      composer install
-    )
-
-    if [[ $# -eq 0 ]] || [[ $# -eq 1 && "$1" == "check" ]]; then
-      ./tools/php-cs-fixer/vendor/bin/php-cs-fixer check --config=.php-cs-fixer.php --using-cache=no
-    elif [[ $# -eq 1 && "$1" == "fix" ]]; then
-      ./tools/php-cs-fixer/vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php --using-cache=no
-    else
-      ./tools/php-cs-fixer/vendor/bin/php-cs-fixer "$@"
-    fi
-
-    return
+  if (( $# == 0 )) || [[ $# -eq 1 && "$1" == "check" ]]; then
+    _php_tool php-cs-fixer check --config=.php-cs-fixer.php --using-cache=no
+  elif [[ $# -eq 1 && "$1" == "fix" ]]; then
+    _php_tool php-cs-fixer fix --config=.php-cs-fixer.php --using-cache=no
+  else
+    _php_tool php-cs-fixer "$@"
   fi
-
-  echo "./tools/php-cs-fixer do not exist"
-}
-
-function phpcs() {
-  if [[ -f ./vendor/bin/phpcs ]]; then
-    ./vendor/bin/phpcs "$@"
-    return
-  fi
-
-  echo "./vendor/bin/phpcs do not exist"
-}
-
-function phpcbf() {
-  if [[ -f ./vendor/bin/phpcbf ]]; then
-    ./vendor/bin/phpcbf "$@"
-    return
-  fi
-
-  echo "./vendor/bin/phpcbf do not exist"
 }
 
 function psalm() {
-  if [[ -d "tools/psalm" ]]; then
-    (
-      cd tools/psalm
-      composer install
-    )
-
-    if [[ $# -eq 0 ]]; then
-      ./tools/psalm/vendor/bin/psalm --config=psalm.xml --no-cache
-    elif [[ $# -eq 1 && "$1" == "--alter" ]]; then
-      ./tools/psalm/vendor/bin/psalm --config=psalm.xml --no-cache --alter --issues=all
-    else
-      ./tools/psalm/vendor/bin/psalm "$@"
-    fi
-    return
+  if (( $# == 0 )); then
+    _php_tool psalm --config=psalm.xml --no-cache
+  elif [[ $# -eq 1 && "$1" == "--alter" ]]; then
+    _php_tool psalm --config=psalm.xml --no-cache --alter --issues=all
+  else
+    _php_tool psalm "$@"
   fi
+}
 
-  echo "./tools/psalm do not exis"
+function phpcs() {
+  _vendor_bin phpcs "$@"
+}
+
+function phpcbf() {
+  _vendor_bin phpcbf "$@"
 }

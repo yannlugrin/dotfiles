@@ -1,6 +1,48 @@
-#!/bin/sh
+#!/bin/bash
+#
+# Per-user toolchains, none of which need sudo. Runs after rcup has created the
+# symlinks, which the Ruby install below depends on.
+#
+# Anything that writes to a shell rc file must be neutered here: ~/.zshrc is a
+# symlink into this repository, so an installer that "helpfully" appends its
+# snippet edits the tracked file. That is how the nvm and bun blocks ended up
+# committed in zshrc.
 
-# Install rbenv plugins
+###
+### node
+###
+
+# The zsh-nvm plugin loads nvm (lazily), but installing it here pins a real
+# release instead of relying on the plugin's clone of the long-dead
+# creationix/nvm URL. PROFILE=/dev/null keeps the installer out of ~/.zshrc.
+if command -v curl >/dev/null 2>&1; then
+  NVM_VERSION=$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest | grep '"tag_name"' | cut -d '"' -f4)
+
+  if [ -n "$NVM_VERSION" ]; then
+    PROFILE=/dev/null bash -c \
+      "curl -o- 'https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh' | bash"
+  else
+    echo "Could not resolve the latest nvm release; skipping." >&2
+  fi
+fi
+
+# Install the latest LTS node and make it the default, so a fresh machine ends
+# up with a working node instead of just a working nvm.
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  # shellcheck disable=SC1091
+  . "$NVM_DIR/nvm.sh"
+
+  nvm install --lts
+  nvm alias default 'lts/*'
+fi
+
+###
+### ruby
+###
+
+# Install rbenv plugins. rbenv-default-gems reads $(rbenv root)/default-gems,
+# which rcup links from rbenv/default-gems in this repository.
 if command -v rbenv >/dev/null 2>&1; then
   mkdir -p "$(rbenv root)/plugins"
   if [ ! -e "$(rbenv root)/plugins/rbenv-aliases" ]; then
@@ -13,16 +55,60 @@ if command -v rbenv >/dev/null 2>&1; then
     git clone https://github.com/rbenv/rbenv-default-gems.git \
         "$(rbenv root)/plugins/rbenv-default-gems"
   fi
+
+  # Install the latest stable Ruby and make it the default.
+  #
+  # This has to come after the two plugins above and after rcup has linked
+  # rbenv/default-gems into $(rbenv root): rbenv-default-gems reads that file
+  # while a Ruby is being built, so bundler only lands in the new Ruby if the
+  # plugin and the file are already in place. That symlink is the reason this
+  # hook, and not pre-up, is where the language runtimes are installed.
+  #
+  # `rbenv install -l` lists only stable releases. Keeping plain x.y.z drops
+  # jruby, truffleruby, mruby and picoruby, leaving the newest MRI.
+  ruby_version=$(rbenv install -l 2>/dev/null \
+    | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' \
+    | sort -V \
+    | tail -1)
+
+  if [ -z "$ruby_version" ]; then
+    echo "Could not resolve the latest stable Ruby; skipping." >&2
+  else
+    if [ ! -d "$(rbenv root)/versions/$ruby_version" ]; then
+      echo "Installing Ruby ${ruby_version}, this compiles from source and takes a while..."
+      rbenv install "$ruby_version"
+    fi
+
+    # rbenv global is the user-wide default; it writes $(rbenv root)/version.
+    rbenv global "$ruby_version"
+    rbenv rehash
+
+    # Keep the x.y aliases from rbenv-aliases pointing at the new version.
+    if [ -e "$(rbenv root)/plugins/rbenv-aliases" ]; then
+      rbenv alias --auto
+    fi
+  fi
 fi
 
-# Ensure zsh directory exists
-mkdir -p $HOME/.zsh
+###
+### Claude Code
+###
+
+# This installer only drops a binary in ~/.local/bin and leaves shell rc files
+# alone, so it needs no PROFILE guard.
+if command -v curl >/dev/null 2>&1; then
+  curl -fsSL https://claude.ai/install.sh | bash
+fi
+
+###
+### WSL
+###
 
 # Install npiperelay on the Windows side, to bridge the Bitwarden SSH agent
 # into WSL. It is the only Windows binary this needs, and is kept under the
 # Windows user profile, out of the WSL filesystem and out of $PATH.
 # See docs/bitwarden-ssh-agent.md
-if [ -n "$WSL_DISTRO_NAME" ] || grep -qi microsoft /proc/version 2>/dev/null; then
+if [ -n "${WSL_DISTRO_NAME:-}" ] || grep -qi microsoft /proc/version 2>/dev/null; then
   NPIPERELAY_VERSION="v1.11.4"
   NPIPERELAY_SHA256="cea82cf5c9c22a28bef8075750acb7958f766393baebff4597cf21442f71c4b3"
   NPIPERELAY_URL="https://github.com/albertony/npiperelay/releases/download/${NPIPERELAY_VERSION}/npiperelay_windows_amd64.exe"
@@ -59,5 +145,3 @@ if [ -n "$WSL_DISTRO_NAME" ] || grep -qi microsoft /proc/version 2>/dev/null; th
     fi
   fi
 fi
-
-sudo locale-gen en_US.UTF-8

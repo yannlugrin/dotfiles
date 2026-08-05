@@ -1,0 +1,36 @@
+#!/bin/env zsh
+#
+# Shared bits every other function file relies on. Named so it sorts first in
+# the $ZSH/functions/* source loop.
+
+# Detected once per shell: /proc/version means a fork, and the answer never
+# changes mid-session. Overridable so the non-WSL paths can be exercised with
+# IS_WSL=0 on a WSL box.
+if [[ -z "$IS_WSL" ]]; then
+  if [[ -n "$WSL_DISTRO_NAME" ]] || grep -qi microsoft /proc/version 2>/dev/null; then
+    IS_WSL=1
+  else
+    IS_WSL=0
+  fi
+fi
+export IS_WSL
+
+function is_wsl() {
+  (( IS_WSL ))
+}
+
+# Where client projects live, as <base>/<client>/<project>. Used by dev(), its
+# completion, project_name() and the prompt, so it lives in one place.
+export DEV_BASE_DIR="${DEV_BASE_DIR:-$HOME/projects}"
+
+# Root of the client project containing $1 (default: $PWD), or nothing when we
+# are not inside one.
+function _project_root() {
+  local dir="${1:-$PWD}"
+
+  [[ "$dir" == "$DEV_BASE_DIR"/*/* ]] || return 1
+
+  # Strip everything below <base>/<client>/<project>
+  dir="${dir#$DEV_BASE_DIR/}"
+  print -r -- "$DEV_BASE_DIR/${dir%%/*}/${${dir#*/}%%/*}"
+}

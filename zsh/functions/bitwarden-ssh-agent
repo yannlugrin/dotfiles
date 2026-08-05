@@ -12,16 +12,16 @@
 # See docs/bitwarden-ssh-agent.md
 
 # Only relevant under WSL. Elsewhere the keychain function takes over.
-if [[ -n "$WSL_DISTRO_NAME" ]] || grep -qi microsoft /proc/version 2>/dev/null; then
+if is_wsl; then
 
   BITWARDEN_SSH_PIPE="//./pipe/openssh-ssh-agent"
   BITWARDEN_SSH_SOCK="$HOME/.ssh/bitwarden-agent.sock"
   BITWARDEN_SSH_PIDFILE="${XDG_RUNTIME_DIR:-/tmp}/bitwarden-ssh-agent.pid"
   BITWARDEN_SSH_LOG="$HOME/.cache/bitwarden-ssh-agent.log"
 
-  # Written by bin/install-npiperelay. Keeping the path here rather than
-  # deriving it avoids spawning cmd.exe on every shell startup, and keeps the
-  # Windows binary out of $PATH.
+  # Written by hooks/post-up. Keeping the path here rather than deriving it
+  # avoids spawning cmd.exe on every shell startup, and keeps the Windows
+  # binary out of $PATH.
   BITWARDEN_NPIPERELAY="${BITWARDEN_NPIPERELAY:-$(<${HOME}/.config/bitwarden-ssh-agent/npiperelay-path 2>/dev/null)}"
 
   # True when our socat relay is still alive. Uses only shell builtins and

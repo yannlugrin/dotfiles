@@ -1,0 +1,20 @@
+#compdef dc dce dcb dcup
+#
+# dc/dce/dcb/dcup are aliases for `docker compose ...`. Rewrite the command line
+# into the docker form and hand it to docker's own completion, which also gives
+# us the "docker is not running" message from _docker for free.
+
+local -a prefix
+
+case $words[1] in
+  (dc)   prefix=(docker compose) ;;
+  (dce)  prefix=(docker compose exec) ;;
+  (dcb)  prefix=(docker compose build) ;;
+  (dcup) prefix=(docker compose up) ;;
+  (*)    return 1 ;;
+esac
+
+words=($prefix "${(@)words[2,-1]}")
+(( CURRENT += $#prefix - 1 ))
+
+_docker "$@"

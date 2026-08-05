@@ -6,7 +6,7 @@
 # Under WSL this is not used at all: the keys live in Bitwarden Desktop and
 # SSH_AUTH_SOCK points at its relay instead. See zsh/functions/bitwarden-ssh-agent.
 
-if [[ -n "$WSL_DISTRO_NAME" ]] || grep -qi microsoft /proc/version 2>/dev/null; then
+if is_wsl; then
   return
 fi
 

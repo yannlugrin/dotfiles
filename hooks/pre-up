@@ -1,33 +1,50 @@
 #!/bin/bash
+#
+# System-wide setup: everything that needs sudo. Runs before rcup creates the
+# symlinks. Per-user toolchains live in post-up instead.
+
+set -u
+
+if [ -n "${WSL_DISTRO_NAME:-}" ] || grep -qi microsoft /proc/version 2>/dev/null; then
+  IS_WSL=1
+else
+  IS_WSL=0
+fi
 
 # Install dependencies on Ubuntu
 if command -v apt-get >/dev/null 2>&1; then
   sudo apt-get update
   sudo apt-get upgrade -y
 
-  sudo apt-get install -y \
-    \
-    composer \
-    curl \
-    git \
-    rbenv \
-    ruby-build \
-    php-cli \
-    python3-pip \
-    ripgrep \
-    socat \
-    wsl \
+  packages=(
+    autoconf     # ruby-build only Suggests it, so ask for it explicitly
+    composer
+    curl
+    git
+    locales
+    php-cli
+    python3-pip
+    rbenv
+    ripgrep
+    ruby-build   # builds Ruby for rbenv; pulls its headers in via Recommends
     zsh
+  )
+
+  if [ "$IS_WSL" -eq 1 ]; then
+    # socat bridges the Bitwarden SSH agent's Windows named pipe into WSL.
+    # See docs/bitwarden-ssh-agent.md
+    packages+=(socat)
+  else
+    # Off WSL there is no Bitwarden relay, so keychain holds the ssh-agent.
+    # See zsh/functions/keychain
+    packages+=(keychain)
+  fi
+
+  sudo apt-get install -y "${packages[@]}"
 fi
 
-
-# Install NVM
-if command -v curl >/dev/null 2>&1; then
-  NVM_VERSION=$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest | grep '"tag_name"' | cut -d '"' -f4)
-  curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash
-fi
-
-# Install Claude code
-if command -v curl >/dev/null 2>&1; then
-  curl -fsSL https://claude.ai/install.sh | bash
+# zshrc exports LANG and LC_ALL, so the locale has to exist before the first
+# shell that reads it.
+if command -v locale-gen >/dev/null 2>&1; then
+  sudo locale-gen en_US.UTF-8
 fi

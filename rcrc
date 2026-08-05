@@ -1,2 +1,2 @@
-EXCLUDES="README.md LICENSE Brewfile bin docs"
+EXCLUDES="README.md LICENSE bin docs"
 DOTFILES_DIRS="$HOME/.dotfiles"
