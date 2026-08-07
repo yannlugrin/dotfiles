@@ -37,7 +37,8 @@ first run, before `.rcrc` itself is symlinked in.
 `hooks/pre-up` does the system-wide setup, which is everything needing `sudo`:
 the apt packages and the locale. `hooks/post-up` installs the per-user
 toolchains: nvm with the latest LTS node as the default, rbenv's plugins with
-the latest stable Ruby as the default, Claude Code, and npiperelay under WSL.
+the latest stable Ruby as the default, Claude Code, the Bitwarden CLI, and
+npiperelay under WSL.
 
 The runtimes belong in `post-up` because rbenv-default-gems reads
 `$(rbenv root)/default-gems`, which only exists once `rcup` has linked it. Both

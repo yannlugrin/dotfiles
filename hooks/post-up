@@ -101,6 +101,68 @@ if command -v curl >/dev/null 2>&1; then
 fi
 
 ###
+### Bitwarden CLI
+###
+
+# The standalone build from bitwarden.com, not the npm package: it carries its
+# own node, so it keeps working whatever nvm's current version is, and nothing
+# has to be installed globally into a node that nvm may replace tomorrow.
+#
+# The SSH agent comes from Bitwarden Desktop, not from this.
+# See docs/bitwarden-ssh-agent.md
+if command -v curl >/dev/null 2>&1 && command -v unzip >/dev/null 2>&1; then
+  case "$(uname -m)" in
+    x86_64)          bw_asset="bw-linux" ;;
+    aarch64 | arm64) bw_asset="bw-linux-arm64" ;;
+    *)               bw_asset="" ;;
+  esac
+
+  if [ -z "$bw_asset" ]; then
+    echo "No Bitwarden CLI build for $(uname -m); skipping." >&2
+  else
+    # The download endpoint redirects to the current release asset, so the
+    # Location header answers "which version is the latest?" on its own:
+    # .../releases/download/cli-v2026.7.0/bw-linux-2026.7.0.zip
+    #
+    # It only knows about the x86_64 build (?variant=arm64 is a 404), but the
+    # release it points at holds every architecture, so the arm64 URL is that
+    # same directory with the other asset name.
+    bw_url=$(curl -fsI -o /dev/null -w '%{redirect_url}' \
+      'https://bitwarden.com/download/?app=cli&platform=linux')
+
+    case "$bw_url" in
+      */bw-linux-*.zip)
+        bw_version=${bw_url##*/bw-linux-}
+        bw_version=${bw_version%.zip}
+        bw_url="${bw_url%/*}/${bw_asset}-${bw_version}.zip"
+        ;;
+      *)
+        bw_version=""
+        ;;
+    esac
+
+    if [ -z "$bw_version" ]; then
+      echo "Could not resolve the latest Bitwarden CLI release; skipping." >&2
+    elif [ "$("$HOME/.local/bin/bw" --version 2>/dev/null)" != "$bw_version" ]; then
+      echo "Installing Bitwarden CLI ${bw_version} (${bw_asset})..."
+      bw_tmp=$(mktemp -d)
+
+      if curl -fsSL -o "$bw_tmp/bw.zip" "$bw_url" \
+          && unzip -qo "$bw_tmp/bw.zip" bw -d "$bw_tmp"; then
+        mkdir -p "$HOME/.local/bin"
+        # install(1) puts the binary in place in one step, so a running bw is
+        # never left half-written.
+        install -m 755 "$bw_tmp/bw" "$HOME/.local/bin/bw"
+      else
+        echo "Could not install the Bitwarden CLI." >&2
+      fi
+
+      rm -rf "$bw_tmp"
+    fi
+  fi
+fi
+
+###
 ### WSL
 ###
 
