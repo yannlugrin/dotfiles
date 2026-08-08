@@ -16,7 +16,10 @@ if is_wsl; then
 
   BITWARDEN_SSH_PIPE="//./pipe/openssh-ssh-agent"
   BITWARDEN_SSH_SOCK="$HOME/.ssh/bitwarden-agent.sock"
-  BITWARDEN_SSH_PIDFILE="${XDG_RUNTIME_DIR:-/tmp}/bitwarden-ssh-agent.pid"
+  # Must not depend on session environment (XDG_RUNTIME_DIR is unset in some
+  # WSL shells), or shells with different environments each spawn their own
+  # relay. Stale pids are already handled by the /proc comm check below.
+  BITWARDEN_SSH_PIDFILE="$HOME/.cache/bitwarden-ssh-agent.pid"
   BITWARDEN_SSH_LOG="$HOME/.cache/bitwarden-ssh-agent.log"
 
   # Written by hooks/post-up. Keeping the path here rather than deriving it
