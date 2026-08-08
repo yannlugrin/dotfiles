@@ -27,6 +27,7 @@ if command -v apt-get >/dev/null 2>&1; then
     python-is-python3   # `python` on the PATH; Ubuntu only ships `python3`
     python3
     python3-pip
+    python3-venv
     rbenv
     ripgrep
     ruby-build   # builds Ruby for rbenv; pulls its headers in via Recommends
