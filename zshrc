@@ -30,12 +30,6 @@ export LANG=en_US.UTF-8
 typeset -U path PATH
 
 path=(
-  # Repository-local binaries, for repositories marked as trusted with
-  # `git trust` (which creates .git/safe).
-  .git/safe/../../bin
-  .git/safe/../../vendor/bin
-  .git/safe/../../node_modules/.bin
-
   $HOME/.local/bin
   $HOME/bin
 
@@ -47,6 +41,47 @@ path=(
 
   $path
 )
+
+# Repository-local binaries, for repositories marked as trusted with
+# `git trust` (which creates .git/safe).
+#
+# The dirs are resolved to absolute paths on every cd rather than left relative
+# (`.git/safe/../../bin`): zsh only hashes absolute $path entries, and command
+# completion completes out of that hash table, so relative entries give
+# binaries that run but never complete. Absolute entries also keep working from
+# a subdirectory of the repository.
+#
+# The walk up to the repository root is done by hand instead of with
+# `git rev-parse`, to keep a fork off every cd.
+autoload -Uz add-zsh-hook
+
+typeset -ga _git_safe_dirs
+
+function _git_safe_path() {
+  local dir=$PWD
+
+  # Drop what the previous repository added, by exact match.
+  path=( ${path:|_git_safe_dirs} )
+  _git_safe_dirs=()
+
+  while [[ -n $dir ]]; do
+    if [[ -d $dir/.git/safe ]]; then
+      _git_safe_dirs=(
+        $dir/bin
+        $dir/vendor/bin
+        $dir/node_modules/.bin
+        $dir/.venv/bin
+      )
+      path=( $_git_safe_dirs $path )
+      break
+    fi
+
+    dir=${dir%/*}
+  done
+}
+
+add-zsh-hook chpwd _git_safe_path
+_git_safe_path
 
 ###
 ### Completion
