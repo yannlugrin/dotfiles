@@ -11,6 +11,30 @@ else
   IS_WSL=0
 fi
 
+# Setup GitHub's own apt repository.
+if command -v apt-get >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
+  gh_keyring=/etc/apt/keyrings/githubcli-archive-keyring.gpg
+  gh_tmp=$(mktemp)
+
+  if curl -fsSL -o "$gh_tmp" https://cli.github.com/packages/githubcli-archive-keyring.gpg; then
+    sudo install -d -m 755 /etc/apt/keyrings
+    sudo install -m 644 "$gh_tmp" "$gh_keyring"
+
+    sudo tee /etc/apt/sources.list.d/github-cli.sources >/dev/null <<EOF
+Types: deb
+URIs: https://cli.github.com/packages
+Suites: stable
+Components: main
+Architectures: $(dpkg --print-architecture)
+Signed-By: $gh_keyring
+EOF
+  else
+    echo "Could not fetch the GitHub CLI signing key; skipping its apt repository." >&2
+  fi
+
+  rm -f "$gh_tmp"
+fi
+
 # Install dependencies on Ubuntu
 if command -v apt-get >/dev/null 2>&1; then
   sudo apt-get update
@@ -20,6 +44,7 @@ if command -v apt-get >/dev/null 2>&1; then
     autoconf     # ruby-build only Suggests it, so ask for it explicitly
     composer
     curl
+    gh
     git
     jq
     locales

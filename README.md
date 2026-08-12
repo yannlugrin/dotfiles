@@ -35,7 +35,9 @@ hooks. The `-x` options match `EXCLUDES` in `rcrc` and are only needed for this
 first run, before `.rcrc` itself is symlinked in.
 
 `hooks/pre-up` does the system-wide setup, which is everything needing `sudo`:
-the apt packages and the locale. `hooks/post-up` installs the per-user
+the apt packages and the locale. It also adds GitHub's apt repository, so `gh`
+tracks upstream instead of the much older build in Ubuntu's universe.
+`hooks/post-up` installs the per-user
 toolchains: nvm with the latest LTS node as the default, rbenv's plugins with
 the latest stable Ruby as the default, Claude Code, the Bitwarden CLI, and
 npiperelay under WSL.
