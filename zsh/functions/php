@@ -4,32 +4,9 @@ function _docker_backend_service() {
   _compose_services | grep -E '(dev|backend)' | tr '\n' ' ' | sed 's/ $//'
 }
 
-# Move to a project, to a namespace, or with no argument back to the base
-# directory. The target is a path under $DEV_BASE_DIR, which completion offers
-# whole: `dev docker/games-servers`. Words are joined with /, so
-# `dev docker games-servers` lands in the same place.
 #
-# A label from $DEV_EXTRA_PROJECTS wins over that path: `dev dotfiles` reaches
-# $HOME/.dotfiles, outside the base directory entirely.
-function dev() {
-  local target="${(j:/:)@}"
-  local target_dir
-
-  if (( $+DEV_EXTRA_PROJECTS[$target] )); then
-    target_dir="$DEV_EXTRA_PROJECTS[$target]"
-  else
-    target_dir="$DEV_BASE_DIR${target:+/$target}"
-  fi
-
-  [[ "$PWD" == "$target_dir" ]] && return
-
-  cd "$target_dir"
-}
-
-function dotfiles() {
-  cd ~/.dotfiles
-}
-
+# Drupal related commands, to be run inside the backend container.
+#
 function drush() {
   docker compose exec "$(_docker_backend_service)" ./vendor/bin/drush "$@"
 }
@@ -46,16 +23,20 @@ function docker-as-drupal() {
   docker compose exec "$service" docker-as-drupal "$@"
 }
 
-function docker-as-wordpress() {
-  docker compose exec "$(_docker_backend_service)" docker-as-wordpress "$@"
-}
-
+#
+# WordPress related commands, to be run inside the backend container.
+#
 function wp() {
   docker compose exec "$(_docker_backend_service)" wp "$@"
 }
 
-# Run a tool vendored under tools/<name>, installing it on first use. Both
-# php-cs-fixer and psalm are set up this way.
+function docker-as-wordpress() {
+  docker compose exec "$(_docker_backend_service)" docker-as-wordpress "$@"
+}
+
+#
+# PHP tools, to be run inside the project directory.
+#
 function _php_tool() {
   local name=$1
   shift
@@ -70,7 +51,6 @@ function _php_tool() {
   "./tools/$name/vendor/bin/$name" "$@"
 }
 
-# Run a tool installed by the project itself.
 function _vendor_bin() {
   local name=$1
   shift

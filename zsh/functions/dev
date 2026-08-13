@@ -1,0 +1,27 @@
+#!/bin/env zsh
+
+# Move to a project, to a namespace, or with no argument back to the base
+# directory. The target is a path under $DEV_BASE_DIR, which completion offers
+# whole: `dev docker/games-servers`. Words are joined with /, so
+# `dev docker games-servers` lands in the same place.
+#
+# A label from $DEV_EXTRA_PROJECTS wins over that path: `dev dotfiles` reaches
+# $HOME/.dotfiles, outside the base directory entirely.
+function dev() {
+  local target="${(j:/:)@}"
+  local target_dir
+
+  if (( $+DEV_EXTRA_PROJECTS[$target] )); then
+    target_dir="$DEV_EXTRA_PROJECTS[$target]"
+  else
+    target_dir="$DEV_BASE_DIR${target:+/$target}"
+  fi
+
+  [[ "$PWD" == "$target_dir" ]] && return
+
+  cd "$target_dir"
+}
+
+function dotfiles() {
+  cd ~/.dotfiles
+}
