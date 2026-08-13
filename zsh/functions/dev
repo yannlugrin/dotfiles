@@ -2,24 +2,143 @@
 
 # Move to a project, to a namespace, or with no argument back to the base
 # directory. The target is a path under $DEV_BASE_DIR, which completion offers
-# whole: `dev docker/games-servers`. Words are joined with /, so
-# `dev docker games-servers` lands in the same place.
+# whole: `dev docker/games-servers`.
 #
 # A label from $DEV_EXTRA_PROJECTS wins over that path: `dev dotfiles` reaches
 # $HOME/.dotfiles, outside the base directory entirely.
+#
+# A git URL among the arguments clones instead of moving, and needs no
+# confirmation: passing one says plainly enough that something is to be
+# created.
+#
+#   dev <url>                clone into <base>/<name taken from the URL>
+#   dev docker <url>         same, inside an existing namespace
+#   dev docker/thing <url>   clone into exactly that path
+#
+# A target that does not exist, with no URL to fill it, is ambiguous between a
+# typo and a new project, so that one asks.
 function dev() {
-  local target="${(j:/:)@}"
+  local arg target url
   local target_dir
 
+  for arg in "$@"; do
+    if _is_git_url "$arg"; then
+      if [[ -n "$url" ]]; then
+        print -u2 "dev: more than one git URL"
+        return 1
+      fi
+      url="$arg"
+    elif [[ -n "$target" ]]; then
+      print -u2 "dev: more than one target"
+      return 1
+    else
+      target="$arg"
+    fi
+  done
+
   if (( $+DEV_EXTRA_PROJECTS[$target] )); then
+    if [[ -n "$url" ]]; then
+      print -u2 "dev: $target is a registered project, nothing to clone into"
+      return 1
+    fi
+
     target_dir="$DEV_EXTRA_PROJECTS[$target]"
   else
     target_dir="$DEV_BASE_DIR${target:+/$target}"
+
+    # A URL always creates something; without one, only a target that is not
+    # there yet does.
+    if [[ -n "$url" ]] || [[ -n "$target" && ! -d "$target_dir" ]]; then
+      # An existing namespace, or the base directory itself, is somewhere to
+      # put a clone rather than the clone's own directory, so the URL names it.
+      if [[ -n "$url" && -d "$target_dir" ]] && ! _is_project_dir "$target_dir"; then
+        target_dir="$target_dir/$(_git_project_name "$url")"
+      fi
+
+      _dev_can_create "$target_dir" || return
+
+      if [[ -n "$url" ]]; then
+        _dev_clone "$url" "$target_dir" || return
+      else
+        _dev_fill "$target_dir" || return
+      fi
+    fi
   fi
 
   [[ "$PWD" == "$target_dir" ]] && return
 
   cd "$target_dir"
+}
+
+function _is_git_url() {
+  [[ "$1" == *://* || "$1" == *@*:* ]]
+}
+
+function _git_project_name() {
+  local url="${1%%/}"
+
+  url="${url%.git}"
+
+  print -r -- "${url##*[/:]}"
+}
+
+function _dev_can_create() {
+  local rel="${1#$DEV_BASE_DIR/}"
+
+  # <project> and <namespace>/<project> are the only shapes the layout has.
+  # _project_root reads a deeper path as a project one level down, so the
+  # directory would not be the root of anything.
+  if [[ "$rel" == */*/* ]]; then
+    print -u2 "dev: $rel is deeper than <namespace>/<project>"
+    return 1
+  fi
+
+  if [[ -e "$1" ]]; then
+    print -u2 "dev: $1 already exists"
+    return 1
+  fi
+
+  return 0
+}
+
+# git clone makes the leaf itself, so only the namespace above it is created
+# here: a clone that fails then leaves nothing behind that would read as an
+# empty project.
+function _dev_clone() {
+  local url="$1" target_dir="$2"
+
+  mkdir -p "${target_dir:h}" || return 1
+
+  git clone "$url" "$target_dir"
+}
+
+# git init runs on the leaf only, so the namespace above it stays bare, which
+# is what _is_project_dir looks for.
+function _dev_fill() {
+  local target_dir="$1" answer url
+
+  read -k 1 "answer?dev: $target_dir does not exist. [i]nit, [c]lone, [a]bort? "
+  print
+
+  case "$answer" in
+    ([iI])
+      mkdir -p "$target_dir" || return 1
+      git -C "$target_dir" init
+      ;;
+    ([cC])
+      read "url?dev: git URL: " || return 1
+
+      if [[ -z "$url" ]]; then
+        print -u2 "dev: no URL given"
+        return 1
+      fi
+
+      _dev_clone "$url" "$target_dir"
+      ;;
+    (*)
+      return 1
+      ;;
+  esac
 }
 
 function dotfiles() {
