@@ -1,28 +1,23 @@
 #compdef dev
 
-local base_dir="${DEV_BASE_DIR:-$HOME/projects}"
 local state
+local -a reply projects namespaces
+local dir
 
-_arguments \
-  '1: :->first' \
-  '2: :->project'
+_arguments '1: :->target'
 
-case $state in
-  # Namespaces and namespace-less projects share the first level.
-  (first)
-    if [[ -d "$base_dir" ]]; then
-      local -a entries
-      entries=( "$base_dir"/*(N/:t) )
-      _describe 'namespaces and projects' entries
-    fi
-    ;;
-  (project)
-    local namespace=$words[2]
-    # Nothing to complete below a project: only namespaces hold projects.
-    if [[ -d "$base_dir/$namespace" ]] && ! _is_project_dir "$base_dir/$namespace"; then
-      local -a projects
-      projects=( "$base_dir/$namespace"/*(N/:t) )
-      _describe 'projects' projects
-    fi
-    ;;
-esac
+[[ "$state" == target ]] || return 1
+
+_project_labels
+projects=( $reply )
+
+# Namespaces hold no project of their own, but are still somewhere to go.
+for dir in "$DEV_BASE_DIR"/*(N/); do
+  _is_project_dir "$dir" || namespaces+=( "${dir:t}" )
+done
+
+# A fragment matches anywhere in the label, so `dev proj<TAB>` reaches
+# namespace/project-name: that is the `l:|=* r:|=*` matcher-list in zshrc.
+_alternative \
+  'projects:project:compadd -a projects' \
+  'namespaces:namespace:compadd -a namespaces'

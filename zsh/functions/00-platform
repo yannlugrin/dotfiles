@@ -20,9 +20,19 @@ function is_wsl() {
 }
 
 # Where projects live, as <base>/<namespace>/<project> or, when a namespace
-# would not carry its weight, as <base>/<project>. Used by dev(), its
-# completion, project_name() and the prompt, so it lives in one place.
+# would not carry its weight, as <base>/<project>.
 export DEV_BASE_DIR="${DEV_BASE_DIR:-$HOME/projects}"
+
+# Projects that cannot live under $DEV_BASE_DIR or cannot be identified as
+# projects as they are not git repositories. Can also be used as alias name
+# for a project.
+#
+# The label is what `dev` takes and what the prompt shows. It need not be the
+# directory name, and here drops the leading dot, which docker compose rejects
+# in a project name.
+typeset -gA DEV_EXTRA_PROJECTS=(
+  dotfiles "$HOME/.dotfiles"
+)
 
 # What tells a project directory apart from a namespace directory: every project
 # is a git repository, and a namespace only ever holds project directories. Not
@@ -34,7 +44,15 @@ function _is_project_dir() {
 # Root of the project containing $1 (default: $PWD), or nothing when we are not
 # inside one.
 function _project_root() {
-  local dir="${1:-$PWD}" rest first
+  local dir="${1:-$PWD}" rest first root
+
+  # A registered project matches whole: there is no namespace level below it.
+  for root in ${(v)DEV_EXTRA_PROJECTS}; do
+    if [[ "$dir" == "$root" || "$dir" == "$root"/* ]]; then
+      print -r -- "$root"
+      return
+    fi
+  done
 
   [[ "$dir" == "$DEV_BASE_DIR"/* ]] || return 1
 
@@ -54,10 +72,56 @@ function _project_root() {
   print -r -- "$DEV_BASE_DIR/$first/${${rest#*/}%%/*}"
 }
 
+# Every project, as absolute roots.
+function _project_roots() {
+  local dir
+
+  reply=()
+
+  for dir in "$DEV_BASE_DIR"/*(N/); do
+    if _is_project_dir "$dir"; then
+      reply+=( "$dir" )
+    else
+      reply+=( "$dir"/*(N/) )
+    fi
+  done
+
+  # A registered project that is not on disk is not somewhere to go.
+  for dir in ${(v)DEV_EXTRA_PROJECTS}; do
+    [[ -d "$dir" ]] && reply+=( "$dir" )
+  done
+}
+
+# Every project's label — what `dev` takes and what the prompt shows — in
+# $reply.
+function _project_labels() {
+  local -a roots
+  local label
+
+  _project_roots
+  roots=( $reply )
+
+  # A root under the base directory is spelled by its path relative to it.
+  reply=( ${${(M)roots:#$DEV_BASE_DIR/*}#$DEV_BASE_DIR/} )
+
+  # The rest go by their label, matched through $roots so the on-disk check
+  # still applies.
+  for label in ${(k)DEV_EXTRA_PROJECTS}; do
+    (( ${roots[(I)$DEV_EXTRA_PROJECTS[$label]]} )) && reply+=( "$label" )
+  done
+}
+
 # Name of the project at root $1, as <namespace><separator><project>, or just
 # <project> when the root sits directly under $DEV_BASE_DIR.
 function _project_label() {
-  local root="$1" separator="$2"
+  local root="$1" separator="$2" label
+
+  # A registered project goes by its label, whatever its directory is called.
+  label=${(k)DEV_EXTRA_PROJECTS[(r)$root]}
+  if [[ -n "$label" ]]; then
+    print -r -- "$label"
+    return
+  fi
 
   if [[ "${root:h}" == "$DEV_BASE_DIR" ]]; then
     print -r -- "${root:t}"
