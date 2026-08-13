@@ -11,10 +11,10 @@ alias -g M='| less'
 # Docker
 # Completion for these lives in zsh/completions/_dc, which forwards to docker's
 # own completion (and says so when Docker is not running).
-alias dc='docker compose -p $(project_name)'
-alias dce='docker compose -p $(project_name) exec'
-alias dcb='docker compose -p $(project_name) build'
-alias dcup='docker compose -p $(project_name) up -d'
+alias dc='docker compose'
+alias dce='docker compose exec'
+alias dcb='docker compose build'
+alias dcup='docker compose up -d'
 
 # Capistrano
 alias cap='bundle exec cap'

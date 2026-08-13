@@ -27,11 +27,33 @@ function docker_status() {
   fi
 }
 
-# Every docker compose command in these dotfiles goes through here, so the
-# project name is derived the same way everywhere.
-function _compose() {
-  docker compose -p "$(project_name)" "$@"
+# Name a project's compose stack <namespace>-<project>, or <project> for a
+# project without a namespace, in every one of its subdirectories. This is the
+# only thing naming compose projects: every `docker compose` reads the
+# variable, whether it comes from the dc* aliases, a Makefile, a script or an
+# editor terminal. Compose takes it above the compose file's own `name:` and
+# above the directory name, but still below an explicit -p.
+#
+# Outside a project the variable is unset rather than guessed at, leaving
+# compose its own default of naming the stack after its directory.
+#
+# The value is a snapshot of this shell's directory: a script that cds
+# somewhere else before calling compose inherits the old one, and has to set or
+# unset the variable itself.
+autoload -Uz add-zsh-hook
+
+function _compose_project_env() {
+  local root
+
+  if root=$(_project_root); then
+    export COMPOSE_PROJECT_NAME="$(_project_label "$root" -)"
+  else
+    unset COMPOSE_PROJECT_NAME
+  fi
 }
+
+add-zsh-hook chpwd _compose_project_env
+_compose_project_env
 
 # Service names of the compose project in the current directory. Returns
 # non-zero when docker cannot answer.
@@ -71,12 +93,12 @@ function dccpdb() {
   local file=$1
   local service=$2
 
-  _compose cp "$file" "$service:/var/backups/db-dump.sql"
+  docker compose cp "$file" "$service:/var/backups/db-dump.sql"
 }
 
 # Open a shell in a development environment.
 function dcshell() {
   local service=$1
 
-  _compose exec "$service" bash
+  docker compose exec "$service" bash
 }

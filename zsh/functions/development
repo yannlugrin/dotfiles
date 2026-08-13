@@ -1,28 +1,5 @@
 #!/bin/env zsh
 
-# Docker Compose project name for the current directory: <namespace>-<project>,
-# or just <project> for a project without a namespace. Derived from the project
-# root, so it stays the same in every subdirectory of a project rather than
-# following the last two path components.
-function project_name() {
-  local root=$(_project_root)
-  local name
-
-  if [[ -n "$root" ]]; then
-    name=$(_project_label "$root" -)
-  else
-    # Outside DEV_BASE_DIR, fall back to the last two path components, or to
-    # the last one alone when the path is too shallow to have two.
-    if [[ -n "${${PWD:h}:t}" ]]; then
-      name="${${PWD:h}:t}-${PWD:t}"
-    else
-      name="${PWD:t}"
-    fi
-  fi
-
-  print -r -- "${name:-default}"
-}
-
 function _docker_backend_service() {
   _compose_services | grep -E '(dev|backend)' | tr '\n' ' ' | sed 's/ $//'
 }
@@ -54,7 +31,7 @@ function dotfiles() {
 }
 
 function drush() {
-  _compose exec "$(_docker_backend_service)" ./vendor/bin/drush "$@"
+  docker compose exec "$(_docker_backend_service)" ./vendor/bin/drush "$@"
 }
 
 function docker-as-drupal() {
@@ -66,15 +43,15 @@ function docker-as-drupal() {
     service="test"
   fi
 
-  _compose exec "$service" docker-as-drupal "$@"
+  docker compose exec "$service" docker-as-drupal "$@"
 }
 
 function docker-as-wordpress() {
-  _compose exec "$(_docker_backend_service)" docker-as-wordpress "$@"
+  docker compose exec "$(_docker_backend_service)" docker-as-wordpress "$@"
 }
 
 function wp() {
-  _compose exec "$(_docker_backend_service)" wp "$@"
+  docker compose exec "$(_docker_backend_service)" wp "$@"
 }
 
 # Run a tool vendored under tools/<name>, installing it on first use. Both
