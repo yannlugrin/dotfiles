@@ -101,6 +101,22 @@ if command -v curl >/dev/null 2>&1; then
 fi
 
 ###
+### Dev Containers CLI
+###
+
+# The standalone installer, not `npm install -g @devcontainers/cli`: it drops a
+# bundled node under ~/.devcontainers, so the CLI keeps working whatever
+# version nvm happens to point at.
+#
+# It only prints the `export PATH=...` line to add (zshrc already has it) and
+# never edits a shell rc file, so it needs no PROFILE guard. Re-running it
+# resolves "latest" again and re-points the current symlinks, which is the
+# update path; --update only exists to skip the work when nothing is new.
+if command -v curl >/dev/null 2>&1; then
+  curl -fsSL https://raw.githubusercontent.com/devcontainers/cli/main/scripts/install.sh | sh
+fi
+
+###
 ### Bitwarden CLI
 ###
 

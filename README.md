@@ -39,8 +39,8 @@ the apt packages and the locale. It also adds GitHub's apt repository, so `gh`
 tracks upstream instead of the much older build in Ubuntu's universe.
 `hooks/post-up` installs the per-user
 toolchains: nvm with the latest LTS node as the default, rbenv's plugins with
-the latest stable Ruby as the default, Claude Code, the Bitwarden CLI, and
-npiperelay under WSL.
+the latest stable Ruby as the default, Claude Code, the Dev Containers CLI, the
+Bitwarden CLI, and npiperelay under WSL.
 
 The runtimes belong in `post-up` because rbenv-default-gems reads
 `$(rbenv root)/default-gems`, which only exists once `rcup` has linked it. Both

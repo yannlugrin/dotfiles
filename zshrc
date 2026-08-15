@@ -37,6 +37,10 @@ path=(
   # config bin-dir`, which costs a PHP startup on every shell.
   ${COMPOSER_HOME:-$HOME/.config/composer}/vendor/bin
 
+  # The Dev Containers CLI, installed by hooks/post-up. It ships its own node
+  # under the same prefix, so nothing here depends on nvm.
+  $HOME/.devcontainers/bin
+
   $HOME/.dotfiles/bin
 
   $path
