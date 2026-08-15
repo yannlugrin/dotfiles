@@ -1,0 +1,60 @@
+#!/bin/env zsh
+#
+# A `bw` wrapper adding --env to `unlock` and `login`, so that
+#
+#   bw unlock --env
+#
+# does what `export BW_SESSION=$(bw unlock --raw)` does: unlock the vault and
+# keep the session key in this shell, where every later bw command reads it
+# from $BW_SESSION. Only a function can do this; a script gets its own
+# environment and could not export anything back here.
+#
+# The mirror image is handled too: `bw lock` and `bw logout` destroy the
+# session key server-side, so the now-dead variable is dropped as well. Without
+# that, the next command would send a key the vault has already forgotten and
+# fail with a confusing error rather than asking to unlock.
+#
+# Everything else is passed straight through to the real binary.
+
+# Unlock (or log in) and keep the session key. Takes the full `bw` argument
+# list, --env included.
+function _bitwarden_session_env() {
+  local session
+
+  # --env is ours, bw would reject it. The rest (--passwordenv, --passwordfile,
+  # --sso, ...) is its business and passed through untouched.
+  local -a args=( ${@:#--env} )
+
+  # Only stdout is captured, so the master password prompt still reaches the
+  # terminal. On failure the old $BW_SESSION is left alone: it may well still
+  # be valid, and dropping it would lock the shell out over a typo.
+  session=$(command bw "${args[@]}" --raw) || return
+
+  if [[ -z $session ]]; then
+    print -u2 -- "bw: no session key returned, BW_SESSION left unchanged"
+    return 1
+  fi
+
+  export BW_SESSION=$session
+}
+
+function bw() {
+  # Only the first word is looked at: `bw list --env ...` is not ours.
+  case $1 in
+    unlock | login)
+      # (I) is the index of the last match, 0 when there is none.
+      if (( ${@[(I)--env]} )); then
+        _bitwarden_session_env "$@"
+        return
+      fi
+      ;;
+
+    lock | logout)
+      command bw "$@" || return
+      unset BW_SESSION
+      return
+      ;;
+  esac
+
+  command bw "$@"
+}

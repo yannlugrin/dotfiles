@@ -1,0 +1,58 @@
+#compdef bw
+#
+# The Bitwarden CLI generates its own completion (`bw completion --shell zsh`),
+# but it is a bundled node binary and takes over a second to answer, which is
+# far too slow to run at every completion. So the generated file is cached, and
+# regenerated only when the binary it came from has changed.
+#
+# On top of it, --env is added to `unlock` and `login`. That option is ours, not
+# Bitwarden's. See zsh/functions/bitwarden.
+
+local cache_dir="${ZSH_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/zsh}"
+local cache="$cache_dir/bw-completion.zsh"
+local subcommand
+
+# The quotes are part of the value: what is spliced below has to reach
+# _arguments as a single word, and the replacement text of a substitution is
+# not quote-processed again.
+local env_option="'--env[Export the session key as BW_SESSION in this shell]'"
+
+if (( ! $+commands[bw] )); then
+  _message -r 'the bitwarden cli is not installed'
+  return 1
+fi
+
+# -nt on a missing cache is false, hence the -s test first.
+if [[ ! -s $cache || $commands[bw] -nt $cache ]]; then
+  mkdir -p $cache_dir
+
+  # Written aside and moved into place, so that a completion running in another
+  # shell never reads a half-written file.
+  if command bw completion --shell zsh >| $cache.$$ 2>/dev/null; then
+    mv -f $cache.$$ $cache
+  fi
+
+  rm -f $cache.$$
+fi
+
+if [[ ! -s $cache ]]; then
+  _message -r 'could not generate the bw completion'
+  return 1
+fi
+
+# Defines _bw and one _bw_<subcommand> per subcommand. _bw replaces this very
+# file's function, which is what the call at the bottom then reaches.
+source $cache
+
+# Splice --env into the two subcommands that can hand back a session key.
+#
+# The option is inserted into the generated function rather than the whole
+# _arguments call being restated here, which would silently drop whatever
+# options the next bw release adds.
+for subcommand in unlock login; do
+  (( $+functions[_bw_$subcommand] )) || continue
+
+  functions[_bw_$subcommand]=${functions[_bw_$subcommand]/_arguments -C /_arguments -C $env_option }
+done
+
+_bw "$@"
