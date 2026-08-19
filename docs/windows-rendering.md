@@ -155,8 +155,14 @@ warrants least attention; `○` takes the default foreground so it stays legible
 upstream". Telling those two apart would need a second git call per prompt,
 which is not worth it.
 
-The exception is the prompt marker itself, where `$` is green on success and red
-on failure with no other difference. That one is still hue-only.
+The prompt marker is the one place where hue carries the meaning alone: `$` is
+blue after a command that succeeded and red after one that failed, with no other
+difference. It works because of which hues they are. Green against red measures
+ΔE 14.6 under simulated deuteranopia — the pair a deutan eye cannot separate, and
+what this prompt used before. Blue against red is ΔE 68.5.
+
+Blue also marks *changed* and *behind*, but those sit right of the branch while
+the marker sits left of the command, so position keeps them apart.
 
 VS Code diff colours
 --------------------

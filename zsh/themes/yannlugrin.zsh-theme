@@ -139,5 +139,9 @@ TRAPALRM() {
 }
 
 # prompt
-PROMPT='%{$fg[cyan]%}$(custom_path) %(?.%{$fg[green]%}.%{$fg[red]%})%B$%b '
+# Blue rather than green for success. Green against red is the one pair a deutan
+# eye cannot separate -- dE 14.6 under simulation, where blue against red is
+# 68.5. Blue also marks changed and behind, but those sit right of the branch
+# while this sits left of the command, so position keeps them apart.
+PROMPT='%{$fg[cyan]%}$(custom_path) %(?.%{$fg[blue]%}.%{$fg[red]%})%B$%b '
 RPROMPT='$(custom_git_prompt) [%D{%H:%M}]'
