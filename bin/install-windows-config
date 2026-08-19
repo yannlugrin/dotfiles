@@ -18,6 +18,16 @@ for arg in "$@"; do
   esac
 done
 
+# python3 does every JSON merge here, and hooks/pre-up installs it -- but this
+# script is useful before rcup has ever run, so say so plainly rather than
+# failing halfway through with "command not found".
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "python3 is required and not installed." >&2
+  echo "Either run rcup first, which installs it, or:" >&2
+  echo "    sudo apt install -y python3" >&2
+  exit 1
+fi
+
 dotfiles="${DOTFILES:-$HOME/.dotfiles}"
 fragments="$dotfiles/windows"
 
@@ -66,6 +76,7 @@ merge() {
 
   python3 - "$fragment" "$target" <<'PY'
 import json, re, sys
+from pathlib import Path
 
 def strip_jsonc(text):
     out, i, n = [], 0, len(text)
@@ -136,6 +147,16 @@ install_cascadia() {
   if reg.exe query "$key" /v "Cascadia Mono NF (TrueType)" >/dev/null 2>&1; then
     echo "  already installed"
     return
+  fi
+
+  local missing=() tool
+  for tool in curl unzip jq; do
+    command -v "$tool" >/dev/null 2>&1 || missing+=("$tool")
+  done
+  if (( ${#missing[@]} )); then
+    echo "  need ${missing[*]} to download the font; skipping" >&2
+    echo "  run rcup first, or: sudo apt install -y ${missing[*]}" >&2
+    return 0
   fi
 
   local tmp
@@ -217,12 +238,13 @@ first_existing() {
 # second distribution should configure that distribution, not quietly promote it
 # over the one already in use. Pass --choose-default to pick again.
 set_default_profile() {
-  local target="$1" force="$2"
+  local target="$1" force="$2" home="$3"
 
   [[ -f "$target" ]] || return 0
 
-  python3 - "$target" "${WSL_DISTRO_NAME:-}" "$force" <<'PY'
+  python3 - "$target" "${WSL_DISTRO_NAME:-}" "$force" "$home" <<'PY'
 import json, re, sys
+from pathlib import Path
 
 def strip_jsonc(text):
     out, i, n = [], 0, len(text)
@@ -246,6 +268,33 @@ def strip_jsonc(text):
             out.append(c); i += 1
     return re.sub(r',(\s*[}\]])', r'\1', ''.join(out))
 
+def load(path):
+    try:
+        return json.loads(strip_jsonc(path.read_text(encoding='utf-8')))
+    except (OSError, ValueError):
+        return None
+
+def fragment_profiles(home):
+    """WSL profiles that exist only as fragments.
+
+    Windows Terminal does not write generated profiles into settings.json when
+    it launches, so a distribution installed after the last settings change is
+    visible only here.
+    """
+    home = Path(home)
+    roots = [home / 'AppData/Local/Microsoft/Windows Terminal/Fragments',
+             home.parent.parent / 'ProgramData/Microsoft/Windows Terminal/Fragments']
+    for root in roots:
+        if not root.is_dir():
+            continue
+        for app in sorted(root.iterdir()):
+            if not app.is_dir() or 'wsl' not in app.name.lower():
+                continue
+            for path in sorted(app.glob('*.json')):
+                for profile in (load(path) or {}).get('profiles', []):
+                    if profile.get('guid') and profile.get('name'):
+                        yield {'guid': profile['guid'], 'name': profile['name']}
+
 def choose(candidates, preferred):
     """Ask which profile to open by default. None means leave the key alone."""
     try:
@@ -256,7 +305,7 @@ def choose(candidates, preferred):
     print("    several WSL profiles are installed:")
     for n, profile in enumerate(candidates, 1):
         here = "  <- this distribution" if profile is preferred else ""
-        print("      %d) %s%s" % (n, profile.get('name'), here))
+        print("      %d) %s%s" % (n, profile['name'], here))
 
     default = candidates.index(preferred) + 1 if preferred in candidates else 1
     sys.stdout.write("    which should open by default? [%d] " % default)
@@ -272,35 +321,44 @@ def choose(candidates, preferred):
     return None
 
 path, distro, force = sys.argv[1], sys.argv[2], sys.argv[3] == '1'
+home = sys.argv[4]
 with open(path, encoding='utf-8') as f:
     settings = json.loads(strip_jsonc(f.read()))
 
-candidates = [p for p in settings.get('profiles', {}).get('list', [])
-              if p.get('guid') and 'wsl' in str(p.get('source', '')).lower()]
+candidates, seen = [], set()
+for profile in settings.get('profiles', {}).get('list', []):
+    if profile.get('guid') and 'wsl' in str(profile.get('source', '')).lower():
+        candidates.append({'guid': profile['guid'],
+                           'name': profile.get('name', profile['guid'])})
+        seen.add(profile['guid'])
+for profile in fragment_profiles(home):
+    if profile['guid'] not in seen:
+        candidates.append(profile)
+        seen.add(profile['guid'])
 current = settings.get('defaultProfile')
-already = next((p for p in candidates if p.get('guid') == current), None)
+already = next((p for p in candidates if p['guid'] == current), None)
 
 if not candidates:
     chosen = None
     print("    no WSL profile found, leaving defaultProfile alone")
 elif already is not None and not force:
     chosen = None
-    print("    already %s, left alone" % already.get('name'))
+    print("    already %s, left alone" % already['name'])
 elif len(candidates) == 1:
     chosen = candidates[0]
 else:
-    preferred = next((p for p in candidates if p.get('name') == distro), None)
+    preferred = next((p for p in candidates if p['name'] == distro), None)
     chosen = choose(candidates, preferred)
 
 if chosen is not None:
-    if chosen.get('guid') == current:
-        print("    already %s" % chosen.get('name'))
+    if chosen['guid'] == current:
+        print("    already %s" % chosen['name'])
     else:
         settings['defaultProfile'] = chosen['guid']
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(settings, f, indent=4, ensure_ascii=False)
             f.write('\n')
-        print("    set to %s" % chosen.get('name'))
+        print("    set to %s" % chosen['name'])
 PY
 }
 
@@ -318,7 +376,7 @@ vscode=$(first_existing \
 
 echo "Windows Terminal"
 merge "$fragments/windows-terminal.json" "$wt" "Windows Terminal"
-set_default_profile "$wt" "$choose_default"
+set_default_profile "$wt" "$choose_default" "$win_home"
 
 echo "VS Code"
 merge "$fragments/vscode-settings.json" "$vscode" "VS Code"
@@ -328,8 +386,14 @@ merge "$fragments/vscode-settings.json" "$vscode" "VS Code"
 if command -v code >/dev/null 2>&1; then
   if ! code --list-extensions 2>/dev/null | grep -qix 'zhuangtongfa.material-theme'; then
     echo "  installing One Dark Pro"
-    code --install-extension zhuangtongfa.material-theme --force >/dev/null 2>&1 \
-      && echo "    installed" || echo "    failed, install One Dark Pro by hand" >&2
+    # Not silenced: when this fails the reason matters, and it is usually
+    # something the message names outright, such as a missing wget.
+    if out=$(code --install-extension zhuangtongfa.material-theme --force 2>&1); then
+      echo "    installed"
+    else
+      echo "    failed to install One Dark Pro:" >&2
+      echo "$out" | sed 's/^/      /' >&2
+    fi
   else
     echo "  One Dark Pro already installed"
   fi

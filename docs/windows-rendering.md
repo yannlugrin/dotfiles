@@ -5,7 +5,7 @@ Windows Terminal and VS Code share one colour scheme (**One Half Dark**) and one
 terminal font (**Cascadia Mono NF**), both installed by
 `bin/install-windows-config`.
 
-    ./bin/install-windows-config
+    ~/.dotfiles/bin/install-windows-config
 
 The script merges `windows/windows-terminal.json` and
 `windows/vscode-settings.json` into the live settings on the Windows side,
@@ -228,16 +228,38 @@ settings UI, or they will be reverted on the next run.
 identifies profiles by GUID, and the GUID the WSL package generates is derived
 per installation, not from the distribution name — `uuid5` over `Ubuntu` in the
 WSL generator namespace does not reproduce it, and the `--distribution-id` the
-fragment passes is a random v4 GUID minted when the distro was installed. A
+fragment passes is a random v4 GUID minted when the distro was installed.
+Installing the same Debian twice produced two different profile GUIDs, which
+settles it. A
 hard-coded value would therefore be wrong on every other machine. Instead `set_default_profile` in the install script resolves it from the local
 settings.
 
-It matches on the profile *source* rather than the name, because both vary:
-Windows Terminal's own generator marks WSL profiles `Windows.Terminal.Wsl`, while
-the Store WSL app ships fragments marked `Microsoft.WSL`. Any source containing
-`wsl` counts. Among those candidates the profile whose name equals
-`$WSL_DISTRO_NAME` wins — the script runs inside the very distribution it is
-configuring, so that identifies the right one even on a machine running several.
+Candidates come from two places, and both are needed.
+
+Profiles Windows Terminal has already written into `settings.json` carry a
+`source` naming their generator: `Windows.Terminal.Wsl` for its own,
+`Microsoft.WSL` for the Store WSL app. Any source containing `wsl` counts.
+
+But `settings.json` lags behind reality. Windows Terminal discovers fragment
+profiles **at startup**, and only then writes them into `settings.json`. A
+terminal that was already running when a distribution was installed knows nothing
+about it, so between installing a distribution and the next restart the profile
+exists **only** as a fragment under `AppData/Local/Microsoft/Windows Terminal/
+Fragments`.
+
+That window is not hypothetical, it is the normal case for a second
+distribution. The new profile is not in the menu yet, so the way in is `wsl -d
+Debian` from a shell that already exists — and that is precisely where the
+dotfiles get cloned and this script gets run. Both halves were measured:
+installing Debian while the terminal was open left `settings.json` untouched,
+mtime and all, and restarting the terminal wrote the profile in.
+
+So the fragment directories under `AppData/Local` and `ProgramData` are read as
+well, de-duplicated by GUID.
+
+Among the candidates, the profile whose name equals `$WSL_DISTRO_NAME` wins — the
+script runs inside the very distribution it is configuring, so that identifies
+the right one even on a machine running several.
 
 **An existing WSL default is never overridden.** Installing these dotfiles into a
 second distribution — a Debian alongside Ubuntu, say — should configure that

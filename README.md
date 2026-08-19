@@ -49,7 +49,26 @@ first run compiles Ruby from source and takes a while.
 
 `pre-up` installs zsh, so set it as your login shell once `rcup` has finished:
 
-    chsh -s $(which zsh)
+    sudo chsh -s "$(which zsh)" "$USER"
+
+Through `sudo` rather than a bare `chsh`, which authenticates you against PAM and
+fails with "PAM: Authentication failure" on a fresh WSL image even when the
+password is right.
+
+On WSL, the Windows side is a separate step, since rcm only links into `$HOME`
+and cannot reach `/mnt/c`:
+
+    ~/.dotfiles/bin/install-windows-config
+
+It merges the colour scheme, font and editor settings in `windows/` into Windows
+Terminal and VS Code, and is safe to re-run. Run it after `rcup`, which installs
+the `python3`, `curl`, `jq` and `unzip` it needs; run it before and it will say
+what is missing rather than getting halfway.
+
+Then close **every** Windows Terminal window and start it again — not just a new
+tab. Windows Terminal re-reads `settings.json` while it runs, so the colour
+scheme appears immediately, but a newly installed font and the profile of a newly
+installed distribution are only picked up at startup. The same goes for VS Code.
 
 You can safely run `rcup` multiple times to update:
 

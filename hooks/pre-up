@@ -58,6 +58,7 @@ if command -v apt-get >/dev/null 2>&1; then
     ripgrep
     ruby-build   # builds Ruby for rbenv; pulls its headers in via Recommends
     unzip
+    wget
     zsh
   )
 
