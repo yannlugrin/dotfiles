@@ -8,6 +8,16 @@
 # the keys we manage; everything already in the target file is preserved.
 set -euo pipefail
 
+# --choose-default re-asks which WSL profile Windows Terminal should open,
+# even when it already opens one.
+choose_default=0
+for arg in "$@"; do
+  case $arg in
+    --choose-default) choose_default=1 ;;
+    *) echo "unknown option: $arg" >&2; exit 2 ;;
+  esac
+done
+
 dotfiles="${DOTFILES:-$HOME/.dotfiles}"
 fragments="$dotfiles/windows"
 
@@ -192,6 +202,108 @@ first_existing() {
   return 1
 }
 
+# Point defaultProfile at a WSL profile, if it does not already point at one.
+#
+# This cannot live in windows/windows-terminal.json. Windows Terminal identifies
+# profiles by GUID, and the GUID is generated per installation rather than from
+# the distribution name, so a hard-coded value would be wrong on every other
+# machine.
+#
+# Candidates are matched on source, since both the name and the generator vary:
+# Windows Terminal's own generator marks WSL profiles "Windows.Terminal.Wsl",
+# while the Store WSL app ships fragments marked "Microsoft.WSL".
+#
+# An existing WSL default is never overridden. Installing these dotfiles into a
+# second distribution should configure that distribution, not quietly promote it
+# over the one already in use. Pass --choose-default to pick again.
+set_default_profile() {
+  local target="$1" force="$2"
+
+  [[ -f "$target" ]] || return 0
+
+  python3 - "$target" "${WSL_DISTRO_NAME:-}" "$force" <<'PY'
+import json, re, sys
+
+def strip_jsonc(text):
+    out, i, n = [], 0, len(text)
+    while i < n:
+        c = text[i]
+        if c == '"':
+            j = i + 1
+            while j < n:
+                if text[j] == '\\':
+                    j += 2
+                    continue
+                if text[j] == '"':
+                    break
+                j += 1
+            out.append(text[i:j + 1]); i = j + 1
+        elif text.startswith('//', i):
+            j = text.find('\n', i); i = n if j == -1 else j
+        elif text.startswith('/*', i):
+            j = text.find('*/', i + 2); i = n if j == -1 else j + 2
+        else:
+            out.append(c); i += 1
+    return re.sub(r',(\s*[}\]])', r'\1', ''.join(out))
+
+def choose(candidates, preferred):
+    """Ask which profile to open by default. None means leave the key alone."""
+    try:
+        tty = open('/dev/tty')
+    except OSError:
+        return preferred          # not interactive; fall back to this distro
+
+    print("    several WSL profiles are installed:")
+    for n, profile in enumerate(candidates, 1):
+        here = "  <- this distribution" if profile is preferred else ""
+        print("      %d) %s%s" % (n, profile.get('name'), here))
+
+    default = candidates.index(preferred) + 1 if preferred in candidates else 1
+    sys.stdout.write("    which should open by default? [%d] " % default)
+    sys.stdout.flush()
+    answer = tty.readline().strip()
+
+    if not answer:
+        return candidates[default - 1]
+    if answer.isdigit() and 1 <= int(answer) <= len(candidates):
+        return candidates[int(answer) - 1]
+
+    print("    not one of the choices, leaving defaultProfile alone")
+    return None
+
+path, distro, force = sys.argv[1], sys.argv[2], sys.argv[3] == '1'
+with open(path, encoding='utf-8') as f:
+    settings = json.loads(strip_jsonc(f.read()))
+
+candidates = [p for p in settings.get('profiles', {}).get('list', [])
+              if p.get('guid') and 'wsl' in str(p.get('source', '')).lower()]
+current = settings.get('defaultProfile')
+already = next((p for p in candidates if p.get('guid') == current), None)
+
+if not candidates:
+    chosen = None
+    print("    no WSL profile found, leaving defaultProfile alone")
+elif already is not None and not force:
+    chosen = None
+    print("    already %s, left alone" % already.get('name'))
+elif len(candidates) == 1:
+    chosen = candidates[0]
+else:
+    preferred = next((p for p in candidates if p.get('name') == distro), None)
+    chosen = choose(candidates, preferred)
+
+if chosen is not None:
+    if chosen.get('guid') == current:
+        print("    already %s" % chosen.get('name'))
+    else:
+        settings['defaultProfile'] = chosen['guid']
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(settings, f, indent=4, ensure_ascii=False)
+            f.write('\n')
+        print("    set to %s" % chosen.get('name'))
+PY
+}
+
 wt=$(first_existing \
   "$win_home"/AppData/Local/Packages/Microsoft.WindowsTerminal_*/LocalState/settings.json \
   "$win_home"/AppData/Local/Packages/Microsoft.WindowsTerminalPreview_*/LocalState/settings.json \
@@ -206,6 +318,7 @@ vscode=$(first_existing \
 
 echo "Windows Terminal"
 merge "$fragments/windows-terminal.json" "$wt" "Windows Terminal"
+set_default_profile "$wt" "$choose_default"
 
 echo "VS Code"
 merge "$fragments/vscode-settings.json" "$vscode" "VS Code"

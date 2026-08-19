@@ -1,9 +1,18 @@
 {
+  "copyFormatting": "none",
+
+  "keybindings": [
+    { "id": "Terminal.CopyToClipboard", "keys": "ctrl+c" },
+    { "id": "Terminal.PasteFromClipboard", "keys": "ctrl+v" },
+    { "id": "Terminal.DuplicatePaneAuto", "keys": "alt+shift+d" }
+  ],
+
   "profiles": {
     "defaults": {
       "colorScheme": "One Half Dark",
       "font": {
-        "face": "Cascadia Mono NF"
+        "face": "Cascadia Mono NF",
+        "size": 13
       }
     }
   }

@@ -1,4 +1,33 @@
 {
   "workbench.colorTheme": "One Dark Pro",
-  "terminal.integrated.fontFamily": "Cascadia Mono NF"
+  "terminal.integrated.fontFamily": "Cascadia Mono NF",
+
+  "claudeCode.preferredLocation": "sidebar",
+  "claudeCode.hideOnboarding": true,
+  "claudeCode.initialPermissionMode": "acceptEdits",
+
+  "editor.accessibilitySupport": "off",
+  "editor.unicodeHighlight.nonBasicASCII": false,
+
+  "workbench.colorCustomizations": {
+    "[One Dark Pro]": {
+      "diffEditor.insertedLineBackground": "#61AFEF22",
+      "diffEditor.insertedTextBackground": "#61AFEF2A",
+      "diffEditor.removedLineBackground": "#D19A6622",
+      "diffEditor.removedTextBackground": "#D19A662A"
+    }
+  },
+  "editor.tokenColorCustomizations": {
+    "[One Dark Pro]": {
+      "textMateRules": [
+        {
+          "scope": ["markup.quote.markdown"],
+          "settings": {
+            "foreground": "#ABB2BF",
+            "fontStyle": "italic"
+          }
+        }
+      ]
+    }
+  }
 }
