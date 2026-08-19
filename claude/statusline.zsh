@@ -2,7 +2,7 @@
 #
 # Claude Code status line, in two rows:
 #
-#   [namespace/project] ~/relative/path        ⨯docker ✔(main)↑ [14:32]
+#   [namespace/project] ~/relative/path        ⨯docker ✓(main)↑ [14:32]
 #   Opus 5 · high · ▓▓▓░░░░░░░ 32%  24% (1h47m) · 41% (3d4h)
 #
 # The first row is laid out like the prompt — where we are on the left, the
@@ -41,17 +41,19 @@ zmodload zsh/datetime
 if [[ -n $NO_COLOR ]]; then
   C_RESET='' C_STAGED='' C_CHANGED='' C_UNTRACKED='' C_CLEAN=''
   C_AHEAD='' C_BEHIND='' C_DIVERGED='' C_CONFLICT=''
-  C_OK='' C_WARN='' C_ALERT='' C_DIM=''
+  C_SYNCED='' C_NO_UPSTREAM='' C_OK='' C_WARN='' C_ALERT='' C_DIM=''
 else
   C_RESET=$'\e[0m'
   C_STAGED=$'\e[1;32m'      # bold green ●
   C_CHANGED=$'\e[0;34m'     # blue ✚
   C_UNTRACKED=$'\e[1;31m'   # bold red …
-  C_CLEAN=$'\e[1;32m'       # bold green ✔
+  C_CLEAN=$'\e[1;32m'       # bold green ✓
   C_AHEAD=$'\e[1;32m'       # bold green ↑
   C_BEHIND=$'\e[0;34m'      # blue ↓
   C_DIVERGED=$'\e[1;31m'    # bold red ↕
-  C_CONFLICT=$'\e[1;31m'    # bold red ⚡
+  C_CONFLICT=$'\e[1;31m'    # bold red ✗
+  C_SYNCED=$'\e[2m'         # dim — , being level warrants least attention
+  C_NO_UPSTREAM=''          # ○ takes the default foreground, so it stays legible
   C_OK=$'\e[0;32m'
   C_WARN=$'\e[0;33m'
   C_ALERT=$'\e[1;31m'
@@ -154,9 +156,11 @@ function status_path() {
   reply=( "$(_project_label "$root" /)" "${dir/#$root/~}" )
 }
 
-# Git state as <symbols>(branch), from the one `git status` call that answers
-# everything: the branch, the working tree, and the position relative to the
-# upstream. Same reading as the zsh theme, symbol for symbol.
+# Git state as <worktree>(branch)<remote>, from the one `git status` call that
+# answers everything: the branch, the working tree, and the position relative to
+# the upstream. Working-tree state sits left of the branch and remote state sits
+# right of it, so the two never have to be told apart by colour. Same reading as
+# the zsh theme, symbol for symbol.
 #
 # Reads only what is already on disk; fetch_git_repository is what keeps that
 # fresh, and its result shows up here on a later run.
@@ -164,7 +168,7 @@ function status_git() {
   local dir=$1
   local output line branch ab
   local staged changed untracked conflict
-  local symbols=""
+  local worktree="" remote=""
 
   output=$(git -C "$dir" status --porcelain=v2 --branch 2>/dev/null) || return 1
 
@@ -182,29 +186,38 @@ function status_git() {
     esac
   done
 
-  [[ -n $staged ]]    && symbols+="${C_STAGED}●${C_RESET}"
-  [[ -n $changed ]]   && symbols+="${C_CHANGED}✚${C_RESET}"
-  [[ -n $untracked ]] && symbols+="${C_UNTRACKED}…${C_RESET}"
+  # Left of the branch: the state of the working tree.
+  [[ -n $staged ]]    && worktree+="${C_STAGED}●${C_RESET}"
+  [[ -n $changed ]]   && worktree+="${C_CHANGED}✚${C_RESET}"
+  [[ -n $untracked ]] && worktree+="${C_UNTRACKED}…${C_RESET}"
+  [[ -n $conflict ]]  && worktree+="${C_CONFLICT}✗${C_RESET}"
 
-  # branch.ab is "+<ahead> -<behind>", and absent when there is no upstream.
-  if [[ -n $ab ]]; then
+  # Clean describes the working tree alone, so that a tidy checkout that is
+  # merely ahead still reads as clean.
+  [[ -z $worktree ]] && worktree="${C_CLEAN}✓${C_RESET}"
+
+  # Right of the branch: where we stand against the upstream. branch.ab is
+  # "+<ahead> -<behind>", and absent whenever the branch tracks nothing --
+  # either the repository has no remote, or this branch has no upstream set.
+  # Telling those two apart would cost a second git call, which is not worth it.
+  if [[ -z $ab ]]; then
+    remote="${C_NO_UPSTREAM}○${C_RESET}"
+  else
     local ahead=${${ab%% *}#+} behind=${${ab##* }#-}
 
     if (( ahead && behind )); then
-      symbols+="${C_DIVERGED}↕${C_RESET}"
+      remote="${C_DIVERGED}↕${C_RESET}"
     elif (( ahead )); then
-      symbols+="${C_AHEAD}↑${C_RESET}"
+      remote="${C_AHEAD}↑${C_RESET}"
     elif (( behind )); then
-      symbols+="${C_BEHIND}↓${C_RESET}"
+      remote="${C_BEHIND}↓${C_RESET}"
+    else
+      remote="${C_SYNCED}—${C_RESET}"
     fi
   fi
 
-  [[ -n $conflict ]] && symbols+="${C_CONFLICT}⚡${C_RESET}"
-
-  [[ -z $symbols ]] && symbols="${C_CLEAN}✔${C_RESET}"
-
   # (detached) is what porcelain=v2 reports for a detached HEAD.
-  print -r -- "${symbols}(${branch})"
+  print -r -- "${worktree}(${branch})${remote}"
 }
 
 # Bring the current repository's remote-tracking refs up to date, so that the
@@ -466,7 +479,7 @@ typeset -a session_segments
 
 [[ -n $model ]]        && session_segments+=( "$model" )
 [[ -n $effort ]]       && session_segments+=( "${C_DIM}${effort}${C_RESET}" )
-[[ $fast_mode == true ]] && session_segments+=( "${C_WARN}⚡fast${C_RESET}" )
+[[ $fast_mode == true ]] && session_segments+=( "${C_WARN}fast${C_RESET}" )
 [[ $thinking == false ]] && session_segments+=( "${C_DIM}no-think${C_RESET}" )
 
 session_segments+=( "$(status_context $context_pct)" )

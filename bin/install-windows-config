@@ -1,0 +1,227 @@
+#!/usr/bin/env bash
+#
+# Merge the Windows-side configuration in windows/ into the live Windows
+# Terminal and VS Code settings.
+#
+# rcm links files into $HOME, which cannot reach the Windows filesystem, so the
+# Windows half of the setup needs a copy step instead. The fragments hold only
+# the keys we manage; everything already in the target file is preserved.
+set -euo pipefail
+
+dotfiles="${DOTFILES:-$HOME/.dotfiles}"
+fragments="$dotfiles/windows"
+
+if [[ ! -d "$fragments" ]]; then
+  echo "No windows/ directory in $dotfiles" >&2
+  exit 1
+fi
+
+# Locate the Windows user profile. Ask Windows itself first; fall back to a
+# glob for the case where interop is disabled.
+win_home=""
+if command -v powershell.exe >/dev/null 2>&1; then
+  raw=$(powershell.exe -NoProfile -Command 'Write-Output $env:USERPROFILE' 2>/dev/null | tr -d '\r' || true)
+  [[ -n "$raw" ]] && win_home=$(wslpath -u "$raw" 2>/dev/null || true)
+fi
+if [[ -z "$win_home" || ! -d "$win_home" ]]; then
+  for candidate in /mnt/c/Users/*/; do
+    [[ -d "$candidate/AppData" ]] && win_home="${candidate%/}" && break
+  done
+fi
+if [[ -z "$win_home" || ! -d "$win_home" ]]; then
+  echo "Could not locate the Windows user profile under /mnt/c/Users" >&2
+  exit 1
+fi
+
+echo "Windows profile: $win_home"
+
+# merge <fragment> <target>
+#
+# Deep merges the fragment into the target. Both files are JSONC in practice —
+# Windows Terminal and VS Code both allow comments — so strip those before
+# parsing. The target is rewritten as plain JSON, and backed up first.
+merge() {
+  local fragment="$1" target="$2" label="$3"
+
+  if [[ ! -f "$fragment" ]]; then
+    echo "  skip $label: no fragment at $fragment"
+    return
+  fi
+  if [[ ! -f "$target" ]]; then
+    echo "  skip $label: not installed ($target)"
+    return
+  fi
+
+  cp "$target" "$target.bak-$(date +%Y%m%d%H%M%S)"
+
+  python3 - "$fragment" "$target" <<'PY'
+import json, re, sys
+
+def strip_jsonc(text):
+    out, i, n = [], 0, len(text)
+    while i < n:
+        c = text[i]
+        if c == '"':
+            j = i + 1
+            while j < n:
+                if text[j] == '\\':
+                    j += 2
+                    continue
+                if text[j] == '"':
+                    break
+                j += 1
+            out.append(text[i:j + 1]); i = j + 1
+        elif text.startswith('//', i):
+            j = text.find('\n', i); i = n if j == -1 else j
+        elif text.startswith('/*', i):
+            j = text.find('*/', i + 2); i = n if j == -1 else j + 2
+        else:
+            out.append(c); i += 1
+    body = ''.join(out)
+    return re.sub(r',(\s*[}\]])', r'\1', body)
+
+def deep_merge(base, patch):
+    for key, value in patch.items():
+        if isinstance(value, dict) and isinstance(base.get(key), dict):
+            deep_merge(base[key], value)
+        else:
+            base[key] = value
+    return base
+
+fragment_path, target_path = sys.argv[1], sys.argv[2]
+
+with open(fragment_path, encoding='utf-8') as f:
+    patch = json.loads(strip_jsonc(f.read()))
+with open(target_path, encoding='utf-8') as f:
+    target = json.loads(strip_jsonc(f.read()))
+
+before = json.dumps(target, sort_keys=True)
+deep_merge(target, patch)
+
+if json.dumps(target, sort_keys=True) == before:
+    print("    already up to date")
+else:
+    with open(target_path, 'w', encoding='utf-8') as f:
+        json.dump(target, f, indent=4, ensure_ascii=False)
+        f.write('\n')
+    print("    updated")
+PY
+}
+
+
+# Install the Cascadia Nerd Font builds into the user's font folder.
+#
+# Windows Terminal bundles Cascadia inside its app package, where nothing else
+# can see it — which is why VS Code falls back to Consolas, and why the prompt
+# glyphs render differently in the two terminals. Installing it properly fixes
+# both. The NF builds are supersets of the plain ones, same design, so there is
+# no reason to prefer the smaller variant.
+#
+# This is a per-user install: copy into AppData and add the registry values
+# Windows uses to find them. No administrator rights needed.
+install_cascadia() {
+  local font_dir="$win_home/AppData/Local/Microsoft/Windows/Fonts"
+  local key='HKCU\Software\Microsoft\Windows NT\CurrentVersion\Fonts'
+
+  if reg.exe query "$key" /v "Cascadia Mono NF (TrueType)" >/dev/null 2>&1; then
+    echo "  already installed"
+    return
+  fi
+
+  local tmp
+  tmp=$(mktemp -d)
+  trap 'rm -rf "$tmp"' RETURN
+
+  local url
+  url=$(curl -fsSL https://api.github.com/repos/microsoft/cascadia-code/releases/latest \
+        | jq -r '.assets[] | select(.name | endswith(".zip")) | .browser_download_url' | head -1)
+  if [[ -z "$url" ]]; then
+    echo "  could not resolve the Cascadia download URL" >&2
+    return 1
+  fi
+
+  echo "  downloading $(basename "$url")"
+  if ! curl -fsSL -o "$tmp/cascadia.zip" "$url"; then
+    echo "  download failed" >&2
+    return 1
+  fi
+
+  # Only the four NF faces are wanted; the archive carries a dozen variants.
+  unzip -qo "$tmp/cascadia.zip" \
+    'ttf/CascadiaMonoNF.ttf' 'ttf/CascadiaMonoNFItalic.ttf' \
+    'ttf/CascadiaCodeNF.ttf' 'ttf/CascadiaCodeNFItalic.ttf' -d "$tmp"
+
+  mkdir -p "$font_dir"
+
+  # file:registry name. The name must match the font's own family and style,
+  # or Windows lists it but applications cannot resolve it.
+  local entry file name target
+  for entry in \
+    'CascadiaMonoNF.ttf:Cascadia Mono NF (TrueType)' \
+    'CascadiaMonoNFItalic.ttf:Cascadia Mono NF Italic (TrueType)' \
+    'CascadiaCodeNF.ttf:Cascadia Code NF (TrueType)' \
+    'CascadiaCodeNFItalic.ttf:Cascadia Code NF Italic (TrueType)'
+  do
+    file=${entry%%:*}
+    name=${entry#*:}
+    cp "$tmp/ttf/$file" "$font_dir/$file"
+    target=$(wslpath -w "$font_dir/$file")
+    reg.exe add "$key" /v "$name" /t REG_SZ /d "$target" /f >/dev/null 2>&1 \
+      && echo "    $name" \
+      || echo "    failed to register $name" >&2
+  done
+}
+
+echo "Fonts"
+install_cascadia
+
+# Print the first candidate path that exists, if any.
+#
+# The package folder name is worth a word. The "8wekyb3d8bbwe" suffix is
+# Microsoft's publisher hash, derived from the signing certificate: it is the
+# same on every Windows installation and does not change when the app updates.
+# Some sixty Microsoft packages share it. What does vary is the package *name*
+# (Preview ships as Microsoft.WindowsTerminalPreview) and the packaging model
+# itself, since an unpackaged install keeps its settings outside Packages
+# entirely. Hence a candidate list rather than one hard-coded path.
+first_existing() {
+  local candidate
+  for candidate in "$@"; do
+    [[ -f "$candidate" ]] && { printf "%s\n" "$candidate"; return 0; }
+  done
+  return 1
+}
+
+wt=$(first_existing \
+  "$win_home"/AppData/Local/Packages/Microsoft.WindowsTerminal_*/LocalState/settings.json \
+  "$win_home"/AppData/Local/Packages/Microsoft.WindowsTerminalPreview_*/LocalState/settings.json \
+  "$win_home/AppData/Local/Microsoft/Windows Terminal/settings.json" \
+  || true)
+
+vscode=$(first_existing \
+  "$win_home/AppData/Roaming/Code/User/settings.json" \
+  "$win_home/AppData/Roaming/Code - Insiders/User/settings.json" \
+  "$win_home/AppData/Roaming/VSCodium/User/settings.json" \
+  || true)
+
+echo "Windows Terminal"
+merge "$fragments/windows-terminal.json" "$wt" "Windows Terminal"
+
+echo "VS Code"
+merge "$fragments/vscode-settings.json" "$vscode" "VS Code"
+
+# The One Dark Pro theme referenced by the VS Code fragment lives in an
+# extension, so the setting alone is not enough.
+if command -v code >/dev/null 2>&1; then
+  if ! code --list-extensions 2>/dev/null | grep -qix 'zhuangtongfa.material-theme'; then
+    echo "  installing One Dark Pro"
+    code --install-extension zhuangtongfa.material-theme --force >/dev/null 2>&1 \
+      && echo "    installed" || echo "    failed, install One Dark Pro by hand" >&2
+  else
+    echo "  One Dark Pro already installed"
+  fi
+else
+  echo "  code CLI not on PATH, install One Dark Pro by hand"
+fi
+
+echo "Done. Restart Windows Terminal and VS Code to pick up the changes."

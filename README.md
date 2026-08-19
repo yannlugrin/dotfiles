@@ -28,7 +28,7 @@ Clone into your home directory:
 
 Install:
 
-    rcup -d .dotfiles -x README.md -x LICENSE -x bin -x docs
+    rcup -d .dotfiles -x README.md -x LICENSE -x bin -x docs -x windows
 
 This creates symlinks for the config files in your home directory, and runs the
 hooks. The `-x` options match `EXCLUDES` in `rcrc` and are only needed for this
@@ -65,6 +65,9 @@ More informations about my config
 - [Bitwarden SSH agent on WSL](docs/bitwarden-ssh-agent.md): use SSH keys
   stored in Bitwarden from WSL, without keeping private keys on disk. Requires
   a few manual steps on the Windows side.
+- [Terminal rendering on Windows](docs/windows-rendering.md): one colour scheme
+  and one font shared by Windows Terminal and VS Code, why the scheme is not
+  Solarized, and which prompt glyphs survive the Windows font fallback.
 
 More coming soon (or maybe later).
 

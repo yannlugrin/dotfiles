@@ -9,11 +9,13 @@ unsetopt beep
 ZSH_THEME_GIT_PROMPT_STAGED="%{$fg_bold[green]%}●"
 ZSH_THEME_GIT_PROMPT_CHANGED="%{$fg_no_bold[blue]%}✚"
 ZSH_THEME_GIT_PROMPT_UNTRACKED="%{$fg_bold[red]%}…"
-ZSH_THEME_GIT_PROMPT_CLEAN="%{$fg_bold[green]%}✔"
+ZSH_THEME_GIT_PROMPT_CLEAN="%{$fg_bold[green]%}✓"
 ZSH_THEME_GIT_PROMPT_AHEAD="%{$fg_bold[green]%}↑"
 ZSH_THEME_GIT_PROMPT_BEHIND="%{$fg_no_bold[blue]%}↓"
 ZSH_THEME_GIT_PROMPT_DIVERGED="%{$fg_bold[red]%}↕"
-ZSH_THEME_GIT_PROMPT_CONFLICT="%{$fg_bold[red]%}⚡"
+ZSH_THEME_GIT_PROMPT_CONFLICT="%{$fg_bold[red]%}✗"
+ZSH_THEME_GIT_PROMPT_SYNCED=$'%{\e[2m%}—'
+ZSH_THEME_GIT_PROMPT_NO_UPSTREAM="○"
 
 # How often the background fetch may run, in seconds.
 ZSH_THEME_GIT_FETCH_INTERVAL=300
@@ -40,7 +42,7 @@ function custom_path {
 function custom_git_prompt() {
   local status_output branch line ab
   local staged changed untracked conflict
-  local prompt=""
+  local worktree="" remote=""
 
   status_output=$(git status --porcelain=v2 --branch 2>/dev/null) || return 1
 
@@ -58,29 +60,38 @@ function custom_git_prompt() {
     esac
   done
 
-  [[ -n "$staged" ]]    && prompt+="$ZSH_THEME_GIT_PROMPT_STAGED%{$reset_color%}"
-  [[ -n "$changed" ]]   && prompt+="$ZSH_THEME_GIT_PROMPT_CHANGED%{$reset_color%}"
-  [[ -n "$untracked" ]] && prompt+="$ZSH_THEME_GIT_PROMPT_UNTRACKED%{$reset_color%}"
+  # Left of the branch: the state of the working tree.
+  [[ -n "$staged" ]]    && worktree+="$ZSH_THEME_GIT_PROMPT_STAGED%{$reset_color%}"
+  [[ -n "$changed" ]]   && worktree+="$ZSH_THEME_GIT_PROMPT_CHANGED%{$reset_color%}"
+  [[ -n "$untracked" ]] && worktree+="$ZSH_THEME_GIT_PROMPT_UNTRACKED%{$reset_color%}"
+  [[ -n "$conflict" ]]  && worktree+="$ZSH_THEME_GIT_PROMPT_CONFLICT%{$reset_color%}"
 
-  # branch.ab is "+<ahead> -<behind>", and absent when there is no upstream.
-  if [[ -n "$ab" ]]; then
+  # Clean describes the working tree alone, so that a tidy checkout that is
+  # merely ahead still reads as clean.
+  [[ -z "$worktree" ]] && worktree="$ZSH_THEME_GIT_PROMPT_CLEAN%{$reset_color%}"
+
+  # Right of the branch: where we stand against the upstream. branch.ab is
+  # "+<ahead> -<behind>", and absent whenever the branch tracks nothing --
+  # either the repository has no remote, or this branch has no upstream set.
+  # Telling those two apart would cost a second git call, which is not worth it.
+  if [[ -z "$ab" ]]; then
+    remote="$ZSH_THEME_GIT_PROMPT_NO_UPSTREAM%{$reset_color%}"
+  else
     local ahead=${${ab%% *}#+} behind=${${ab##* }#-}
 
     if (( ahead && behind )); then
-      prompt+="$ZSH_THEME_GIT_PROMPT_DIVERGED%{$reset_color%}"
+      remote="$ZSH_THEME_GIT_PROMPT_DIVERGED%{$reset_color%}"
     elif (( ahead )); then
-      prompt+="$ZSH_THEME_GIT_PROMPT_AHEAD%{$reset_color%}"
+      remote="$ZSH_THEME_GIT_PROMPT_AHEAD%{$reset_color%}"
     elif (( behind )); then
-      prompt+="$ZSH_THEME_GIT_PROMPT_BEHIND%{$reset_color%}"
+      remote="$ZSH_THEME_GIT_PROMPT_BEHIND%{$reset_color%}"
+    else
+      remote="$ZSH_THEME_GIT_PROMPT_SYNCED%{$reset_color%}"
     fi
   fi
 
-  [[ -n "$conflict" ]] && prompt+="$ZSH_THEME_GIT_PROMPT_CONFLICT%{$reset_color%}"
-
-  [[ -z "$prompt" ]] && prompt="$ZSH_THEME_GIT_PROMPT_CLEAN%{$reset_color%}"
-
   # (detached) is what porcelain=v2 reports for a detached HEAD.
-  echo "${prompt}(${branch})"
+  echo "${worktree}(${branch})${remote}"
 }
 
 # Update the current repository so the ahead/behind indicator stays honest.
