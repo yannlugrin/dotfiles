@@ -222,4 +222,19 @@ if [ -n "${WSL_DISTRO_NAME:-}" ] || grep -qi microsoft /proc/version 2>/dev/null
       echo "$npiperelay" > "$HOME/.config/bitwarden-ssh-agent/npiperelay-path"
     fi
   fi
+
+  # Let the Linux `docker desktop` plugin find Docker Desktop.
+  #
+  # It looks for the app's control socket under ~/.docker/desktop, where a
+  # Windows or macOS install puts it. Docker Desktop's WSL integration exposes
+  # the same socket somewhere else entirely and never bridges the two, so the
+  # plugin reports "Could not retrieve status" while the daemon answers happily.
+  #
+  # The target only exists while Docker Desktop runs, so this link dangles the
+  # rest of the time -- which is the honest state, and is what the `docker`
+  # wrapper in zsh/functions/docker falls back to when Docker Desktop's Windows
+  # CLI is missing.
+  mkdir -p "$HOME/.docker/desktop"
+  ln -sfn /mnt/wsl/docker-desktop/shared-sockets/host-services/backend.sock \
+    "$HOME/.docker/desktop/backend.sock"
 fi

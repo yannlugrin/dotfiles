@@ -87,6 +87,9 @@ More informations about my config
 - [Terminal rendering on Windows](docs/windows-rendering.md): one colour scheme
   and one font shared by Windows Terminal and VS Code, why the scheme is not
   Solarized, and which prompt glyphs survive the Windows font fallback.
+- [Docker Desktop under WSL](docs/docker-desktop.md): start and stop it from the
+  shell, and stop it when the distro shuts down so that closing the terminal
+  lets the WSL VM go idle instead of running forever.
 
 More coming soon (or maybe later).
 

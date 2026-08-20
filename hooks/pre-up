@@ -80,3 +80,47 @@ fi
 if command -v locale-gen >/dev/null 2>&1; then
   sudo locale-gen en_US.UTF-8
 fi
+
+# Stop Docker Desktop when this distro shuts down, so that closing the terminal
+# lets the whole WSL VM go idle. Without this the docker-desktop distro outlives
+# Ubuntu and keeps the VM -- and its several gigabytes -- running until the next
+# `wsl --shutdown`. See docs/docker-desktop.md
+docker_desktop_cli="/mnt/c/Program Files/Docker/Docker/resources/bin/docker.exe"
+docker_desktop_sock=/mnt/wsl/docker-desktop/shared-sockets/host-services/backend.sock
+
+if [ "$IS_WSL" -eq 1 ] &&
+   [ -x "$docker_desktop_cli" ] &&
+   command -v systemctl >/dev/null 2>&1; then
+
+  # The unit does nothing at boot: ExecStart exists only so that a oneshot can
+  # stay active, and the whole point is the ExecStop that a stopping distro
+  # runs. Ordering it after the interop pieces means it stops *before* them,
+  # since systemd stops units in reverse order -- without that, /mnt/c could
+  # already be gone by the time we reach for the Windows binary.
+  #
+  # The stop is spelled out here rather than delegated to the shell function in
+  # zsh/functions/docker, because systemd can only exec a file and a function is
+  # not one. It is one guarded command: the socket is gone whenever Docker
+  # Desktop is already stopped, and `|| true` keeps a failed stop from making
+  # the shutdown look broken.
+  echo "Installing stop-docker-desktop.service..."
+
+  sudo tee /etc/systemd/system/stop-docker-desktop.service >/dev/null <<EOF
+[Unit]
+Description=Stop Docker Desktop when this distro shuts down
+After=mnt-c.mount systemd-binfmt.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/true
+ExecStop=/bin/sh -c '[ -S $docker_desktop_sock ] && "$docker_desktop_cli" desktop stop --timeout 25 || true'
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now stop-docker-desktop.service
+fi

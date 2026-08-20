@@ -1,5 +1,163 @@
 #!/bin/env zsh
 
+# Docker Desktop, driven from inside WSL through `docker desktop`.
+#
+# The engine does not run in this distro: the CLI is mounted in from
+# /mnt/wsl/docker-desktop/cli-tools and the daemon lives in the docker-desktop
+# distro, driven by the Docker Desktop app on Windows. Two CLIs can talk to that
+# app, and they are available at opposite times:
+#
+#   the Windows build, in Docker Desktop's install directory. There whether the
+#   app runs or not, so it is the only one that can start a stopped app, and it
+#   carries the helpers -- diagnose, logs -- that the Linux build shells out to
+#   under /opt/docker-desktop, a path only a native Linux install has.
+#
+#   the Linux plugin, mounted in from /mnt/wsl/docker-desktop, plus the socket
+#   hooks/post-up links into ~/.docker/desktop. Both halves vanish the moment
+#   Docker Desktop stops, taking the `docker` command itself along.
+#
+# So the Windows build is preferred throughout, and the Linux one is the
+# fallback for an install that has none. `start` cannot use that fallback at all
+# and launches the app itself instead.
+#
+# The shutdown hook in hooks/pre-up does its own stop rather than calling any of
+# this: systemd can only exec a file, and none of these functions is one.
+#
+# WSL only. Everywhere else `docker desktop` is either a native install that
+# needs no help or docker without Docker Desktop at all, and wrapping it would
+# only get in the way.
+#
+# See docs/docker-desktop.md
+if is_wsl; then
+  # By install path rather than by name: whether `docker.exe` resolves as a
+  # command depends on the Windows $PATH that WSL happens to have inherited.
+  DOCKER_DESKTOP_CLI="/mnt/c/Program Files/Docker/Docker/resources/bin/docker.exe"
+
+  # The app itself, the last resort for start: launching it needs no CLI.
+  DOCKER_DESKTOP_APP="/mnt/c/Program Files/Docker/Docker/Docker Desktop.exe"
+
+  # What the Linux plugin talks to, and the honest test of whether Docker
+  # Desktop is running at all: the mount carrying this goes when the app does.
+  DOCKER_DESKTOP_SOCK=/mnt/wsl/docker-desktop/shared-sockets/host-services/backend.sock
+
+  # Bound on the wait for a cold start, which brings up the app, then the
+  # docker-desktop distro, then the engine inside it. Stopping needs no such
+  # bound here: only the shutdown hook does, and it carries its own.
+  DOCKER_DESKTOP_TIMEOUT=120
+
+  # Run `docker desktop ...` through whichever CLI can answer. Everything goes
+  # through here, the subcommands not named below included: diagnose, logs,
+  # restart and the rest are the CLI's business, not ours.
+  function _docker_desktop_cli() {
+    if [[ -x $DOCKER_DESKTOP_CLI ]]; then
+      "$DOCKER_DESKTOP_CLI" desktop "$@"
+      return
+    fi
+
+    if [[ -S $DOCKER_DESKTOP_SOCK ]]; then
+      command docker desktop "$@"
+      return
+    fi
+
+    print -u2 "Docker Desktop is stopped."
+    return 1
+  }
+
+  function _docker_desktop_start() {
+    local -i waited=0
+
+    if docker_is_running; then
+      print "docker is already running."
+      return 0
+    fi
+
+    if [[ -x $DOCKER_DESKTOP_CLI ]]; then
+      # Synchronous: returns once Docker Desktop reports itself started.
+      "$DOCKER_DESKTOP_CLI" desktop start --timeout $DOCKER_DESKTOP_TIMEOUT || return 1
+    elif [[ -x $DOCKER_DESKTOP_APP ]]; then
+      # Through cmd's `start` so the Windows process is detached from this
+      # shell: running the exe directly leaves a stub process here for as long
+      # as the app lives, and a process in this distro is exactly what keeps WSL
+      # from going idle. cmd.exe must start from a Windows-reachable directory
+      # or it warns about UNC paths.
+      ( cd /mnt/c && cmd.exe /c start "" "$(wslpath -w $DOCKER_DESKTOP_APP)" >/dev/null 2>&1 )
+    else
+      print -u2 "Cannot start Docker Desktop: neither its Windows CLI nor the app"
+      print -u2 "is installed where this expects. Start it from Windows instead."
+      return 1
+    fi
+
+    # The app being up is not the daemon being up, and it is the daemon that
+    # every other docker command needs.
+    if ! docker_is_running; then
+      print -n "Waiting for the docker daemon"
+
+      while ! docker_is_running; do
+        if (( waited >= DOCKER_DESKTOP_TIMEOUT )); then
+          print
+          print -u2 "Docker Desktop started but the daemon is not answering."
+          return 1
+        fi
+
+        print -n .
+        sleep 2
+        (( waited += 2 ))
+      done
+
+      print
+    fi
+
+    print "docker is running."
+  }
+
+  # The CLI's own table, plus the one row it cannot fill.
+  #
+  # Status there is the app's answer about itself, and the app is up well before
+  # the engine inside the docker-desktop distro is -- while every other docker
+  # command needs the engine. Nothing else here paraphrases the CLI, and this
+  # does not either: the extra line is appended, in the CLI's own two-column
+  # shape.
+  function _docker_desktop_status() {
+    _docker_desktop_cli status "$@" || return
+
+    if docker_is_running; then
+      printf '%-20s%s\n' Daemon running
+    else
+      printf '%-20s%s\n' Daemon 'not answering'
+    fi
+  }
+
+  function docker() {
+    # Only the first word is looked at, the way the bw wrapper does it.
+    case $1 in
+      desktop)
+        shift
+
+        # Only the two that answer something the CLI cannot: start needs a CLI
+        # that outlives the app, and status is about the daemon rather than the
+        # app. stop and the rest are the CLI's own job.
+        case ${1:-} in
+          start)  shift; _docker_desktop_start "$@" ;;
+          status) shift; _docker_desktop_status "$@" ;;
+          *)      _docker_desktop_cli "$@" ;;
+        esac
+
+        return
+        ;;
+    esac
+
+    # With Docker Desktop stopped, /usr/bin/docker is a symlink into a mount
+    # that is no longer there, and the error for that is a bare "no such file
+    # or directory" naming a path nobody asked about.
+    if [[ ! -x ${commands[docker]} ]]; then
+      print -u2 "Docker Desktop is stopped. (docker desktop start)"
+      return 1
+    fi
+
+    command docker "$@"
+  }
+fi
+
 # Whether the docker daemon answers.
 #
 # `docker version` is the cheapest command that talks to the server: with the
@@ -8,7 +166,7 @@
 function docker_is_running() {
   (( $+commands[docker] )) || return 1
 
-  docker version --format '{{.Server.Version}}' >/dev/null 2>&1
+  command docker version --format '{{.Server.Version}}' >/dev/null 2>&1
 }
 
 # One line of docker state, printed at shell start.
@@ -16,12 +174,19 @@ function docker_is_running() {
 # Interactive shells writing to a terminal only: `zsh -c` and anything reading
 # our stdout must not get this. Silent when docker is not installed at all,
 # there is nothing to report then.
+#
+# Under WSL the daemon is Docker Desktop's and is now stopped whenever this
+# distro shuts down, so finding it down at shell start is the normal case
+# rather than a surprise. The line names the command that fixes it.
+# See docs/docker-desktop.md
 function docker_status() {
   [[ -o interactive ]] && [[ -t 1 ]] || return 0
   (( $+commands[docker] )) || return 0
 
   if docker_is_running; then
     print -P '%F{green}docker is running%f'
+  elif is_wsl; then
+    print -P '%F{red}docker is not running%f (docker desktop start)'
   else
     print -P '%F{red}docker is not running%f'
   fi

@@ -15,9 +15,13 @@
 
 local real
 
-# (N.r) demands a readable regular file, so a dangling symlink is skipped
-# rather than sourced. Our own directory is excluded to avoid finding this file.
-for real in ${^fpath:#$ZSH/completions}/_docker(N.r); do
+# (N-.r) demands a readable regular file, following the symlink to ask: the
+# vendor completion *is* a symlink, and the `-` is what makes `.` test what it
+# points at rather than the link. Without it the test is "is this link itself a
+# regular file", which is never true, and the real completion is never found.
+# A dangling link fails the same test, which is the case this guards against.
+# Our own directory is excluded to avoid finding this file.
+for real in ${^fpath:#$ZSH/completions}/_docker(N-.r); do
   # Docker ships _docker as a file that defines _docker, so sourcing it replaces
   # this shim and the call below reaches the real implementation.
   source $real
