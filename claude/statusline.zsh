@@ -75,9 +75,10 @@ GIT_FETCH_INTERVAL=300
 # clock is last, so it is the clock that loses its digits.
 #
 # The two failure modes are not symmetric: too small truncates, too large only
-# leaves a slightly wider gap before the clock. 3 is what the frame measured at
-# on a fullscreen terminal; raise it if the clock is ever clipped again.
-ROW_RIGHT_MARGIN=3
+# leaves a slightly wider gap before the clock. 3 was measured on a fullscreen
+# terminal and still clipped the clock, so 4 it is; raise it again if it ever
+# comes back.
+ROW_RIGHT_MARGIN=4
 
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/claude-statusline"
 
