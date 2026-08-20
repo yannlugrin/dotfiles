@@ -131,6 +131,60 @@ function fetch_git_repository {
   ) &!
 }
 
+# Windows Terminal tab title: which project the tab sits in, and whether Claude
+# Code is working in it.
+#
+# `precmd` runs between commands and `preexec` immediately before one starts.
+# That split is the whole point here: while a command runs the shell is blocked,
+# so a long Claude Code session would otherwise leave the tab showing whatever
+# was there before it started. preexec labels the tab on the way in, precmd puts
+# it back on the way out.
+#
+# The Ubuntu profile ships with suppressApplicationTitle set, which makes
+# Windows Terminal ignore all of this. windows/windows-terminal.json turns it
+# off; see docs/windows-rendering.md.
+function _tab_title {
+  print -rn -- $'\e]0;'"$1"$'\a'
+}
+
+# Where we are, named the way the prompt names it.
+# Read the same way as the prompt and the Claude status line: the project in
+# brackets, then where we are inside it. The tab cannot measure itself, so it
+# always asks for the long form and lets Windows Terminal truncate -- which it
+# does from the right, giving exactly the priority wanted: marker, then project,
+# then path.
+function _tab_where {
+  local root
+  root=$(_project_root)
+
+  if [[ -n "$root" ]]; then
+    print -r -- "[$(_project_label "$root" /)] ${PWD/#$root/~}"
+  else
+    print -r -- "${PWD/#$HOME/~}"
+  fi
+}
+
+function _tab_title_precmd {
+  _tab_title "$(_tab_where)"
+}
+
+# $1 is the command line about to run. Only Claude Code earns a mention: with
+# several tabs open, the session worth finding again is the one thinking.
+#
+# U+2734 is Claude Code's own mark. It leads rather than trails because Windows
+# Terminal truncates long tab labels from the right, and the marker is the part
+# that has to survive. The tab bar draws in the UI font, not the terminal font,
+# so this has to be a glyph the system font carries -- a Nerd Font icon would
+# render as tofu there even though the grid renders it fine.
+function _tab_title_preexec {
+  local command=${${1%% *}:t}
+
+  [[ "$command" == claude ]] && _tab_title "✴ $(_tab_where)"
+}
+
+add-zsh-hook precmd _tab_title_precmd
+add-zsh-hook preexec _tab_title_preexec
+
 # auto refresh prompt
 TMOUT=10
 TRAPALRM() {

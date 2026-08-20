@@ -10,6 +10,7 @@
   "profiles": {
     "defaults": {
       "colorScheme": "One Half Dark",
+      "suppressApplicationTitle": false,
       "font": {
         "face": "Cascadia Mono NF",
         "size": 13

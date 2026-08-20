@@ -146,6 +146,11 @@ if (( $+commands[rbenv] )); then
   eval "$(rbenv init -)"
 fi
 
+# Claude Code retitles the tab while it runs, which overwrites the title the
+# theme sets from preexec. The theme's version says which project the session
+# belongs to, which is the useful part when several tabs are open.
+export CLAUDE_CODE_DISABLE_TERMINAL_TITLE=1
+
 # nvm is loaded by the zsh-nvm plugin below. Lazy so that the ~0.4s of sourcing
 # nvm.sh is paid on first use instead of at every shell start.
 export NVM_LAZY_LOAD=true
