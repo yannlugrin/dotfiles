@@ -54,9 +54,10 @@ Prompt glyphs
 -------------
 
 Symbols in `zsh/themes/` and `claude/statusline.zsh` must avoid codepoints with a
-Unicode emoji property. Where the terminal font has no glyph, Windows falls back
-to Segoe UI Emoji, which draws a double-width colour glyph into a single cell:
-the symbol renders in the wrong colour and everything after it shifts a column.
+Unicode emoji property, save for the two service markers at the end of this
+section. Where the terminal font has no glyph, Windows falls back to Segoe UI
+Emoji, which draws a double-width colour glyph into a single cell: the symbol
+renders in the wrong colour and everything after it shifts a column.
 
 | was | now | why |
 | --- | --- | --- |
@@ -74,6 +75,27 @@ codepoint has to change.
 fallback chain. That is fine: they resolve to a *text* font, so they stay
 single-width and take the colour they are given. `×` U+00D7 is the natively
 covered alternative if that ever stops behaving.
+
+**The one exception — the service markers.** The two markers at the right of the
+status line's second row — 🐳 U+1F433 for docker, 🔑 U+1F511 for the ssh agent —
+are emoji on purpose. They are pictograms, and every non-emoji pictogram tried
+for them draws nothing at all here:
+
+| tried | result |
+| --- | --- |
+| `⧉` U+29C9, `⚿` U+26BF | tofu — no font in the fallback chain covers them |
+| U+E7B0, U+F084, U+F0868 (Nerd Font) | blank, even though the terminal font is the NF build |
+
+What the rule above warns about is real but cheap here. The emoji font fixes
+their colour and ANSI cannot touch it — which costs nothing, because these
+markers mean "this service answers" by being present, and say nothing by their
+hue. They are two cells wide while zsh counts them as one character, which
+`visible_width` in `claude/statusline.zsh` corrects for. And they sit last on
+their row, so the column they shift belongs to no one.
+
+Anything *else* in these two files still follows the rule. Before adding a
+pictogram, print the candidates to the terminal and look: coverage here is
+narrower than it appears, and the question dialog is not a fair test of it.
 
 Shape, position, hue
 --------------------

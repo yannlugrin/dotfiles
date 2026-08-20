@@ -2,21 +2,23 @@
 #
 # Claude Code status line, in two rows:
 #
-#   [namespace/project] ~/relative/path        ⨯docker ✓(main)↑ [14:32]
-#   Opus 5 · high · ▓▓▓░░░░░░░ 32%  24% (1h47m) · 41% (3d4h)
+#   [namespace/project] ~/relative/path                  ✓(main)↑ [14:32]
+#   Opus 5 · high · ▓▓▓░░░░░░░ 32%  24% (1h47m) · 41% (3d4h)       🐳🔑
 #
 # The first row is laid out like the prompt — where we are on the left, the
 # state on the right — and shows the same project label, the same git symbols
 # and the same clock, so the two read alike. The second is what only Claude
 # Code knows: the model, the context window, and how much of the
 # subscription's rate limit windows is gone. The five hour window comes first,
-# the seven day one second; they go unlabelled.
+# the seven day one second; they go unlabelled. Its right hand end carries the
+# two service markers, which say that docker and the ssh agent are answering by
+# being there at all.
 #
 # Claude Code pipes a JSON object on stdin, runs us after every assistant
 # message and on the refreshInterval timer, and kills us if the next update
 # arrives while we are still going. That budget is what shapes the script: one
-# git call, and nothing else in the foreground. The docker check and the git
-# fetch both happen in detached processes and are read from their results on a
+# git call, and nothing else in the foreground. The service checks and the git
+# fetch all happen in detached processes and are read from their results on a
 # later run.
 
 emulate -L zsh
@@ -60,14 +62,27 @@ else
   C_DIM=$'\e[2m'
 fi
 
-# How long a docker answer is trusted before a background process re-asks.
-DOCKER_CACHE_TTL=20
+# How long a service answer is trusted before a background process re-asks.
+SERVICE_CACHE_TTL=20
+
+# The two service markers on row two.
+#
+# Emoji, against the rule in docs/windows-rendering.md, because they are the
+# only pictograms this terminal draws at all: ⧉ and ⚿ come out as tofu, and
+# Nerd Font icons render as nothing. What the rule warns about costs us little
+# here. The colour is fixed by the emoji font and ANSI cannot touch it, but
+# these markers carry their meaning by being present, not by their hue. They
+# are also two cells wide while counting as one character, which visible_width
+# knows about, and they sit last on their row, so the column they shift is
+# nobody's.
+DOCKER_GLYPH=$'\U1F433'   # spouting whale, the docker one
+SSH_GLYPH=$'\U1F511'      # key
 
 # How often a repository may be fetched in the background. The zsh theme's
 # ZSH_THEME_GIT_FETCH_INTERVAL, so the two throttle alike.
 GIT_FETCH_INTERVAL=300
 
-# Columns left free at the right edge of the first row.
+# Columns left free at the right edge of both rows.
 #
 # $COLUMNS is the whole terminal, but the status line renders inside the
 # interface's own frame, which indents it on both sides by an amount it does not
@@ -75,7 +90,7 @@ GIT_FETCH_INTERVAL=300
 # clock is last, so it is the clock that loses its digits.
 #
 # The two failure modes are not symmetric: too small truncates, too large only
-# leaves a slightly wider gap before the clock. 3 was measured on a fullscreen
+# leaves a slightly wider gap before the right hand group. 3 was measured on a fullscreen
 # terminal and still clipped the clock, so 4 it is; raise it again if it ever
 # comes back.
 ROW_RIGHT_MARGIN=4
@@ -100,11 +115,16 @@ function repeat_string() {
   print -rn -- "$out"
 }
 
-# Width of $1 on screen, which is its length with the ANSI escapes taken out.
+# Width of $1 on screen: its length with the ANSI escapes taken out, plus one
+# for each of the double-width glyphs, which zsh counts as one character and
+# the terminal draws in two cells. Only the glyphs this script prints itself
+# need to be known here.
 function visible_width() {
   local plain=${1//$'\e'\[[0-9;]#m/}
+  local narrow=${plain//[$DOCKER_GLYPH$SSH_GLYPH]/}
+  local -i wide=$(( ${#plain} - ${#narrow} ))
 
-  print -r -- ${#plain}
+  print -r -- $(( ${#plain} + wide ))
 }
 
 # $1 seconds as a short human duration: 3d4h, 1h47m, 12m.
@@ -137,6 +157,59 @@ function gauge_color() {
   else
     print -r -- $C_OK
   fi
+}
+
+# Run the check $2... in the background and leave its verdict in the cache file
+# $1, for whichever run of this script comes next.
+#
+# Detached on purpose: an unresponsive docker daemon, or an ssh agent whose
+# relay has lost the pipe behind it, would otherwise stall every redraw, and a
+# status line that takes longer than the gap between two assistant messages is
+# a status line that never gets to print. The exit status is the whole verdict,
+# which matters for docker in particular: under WSL its client prints its
+# complaints on stdout rather than stderr, so the output cannot be trusted.
+function refresh_service_cache() {
+  local cache=$1
+  shift
+  local lock="$cache.lock"
+  local -a limit
+
+  # Reclaim a lock left behind by a check that was killed.
+  [[ -n "$lock"(#qNmm+1) ]] && rmdir "$lock" 2>/dev/null
+
+  # mkdir is atomic, so this doubles as the "already checking" test.
+  mkdir "$lock" 2>/dev/null || return 0
+
+  (( $+commands[timeout] )) && limit=( timeout 5 )
+
+  # Detaching is not enough on its own: a child that keeps our stdout open
+  # keeps whoever reads it waiting for the pipe to close, which would hand the
+  # status line exactly the delay this whole arrangement exists to avoid. The
+  # verdict goes to the cache file, so the child needs no output of its own.
+  (
+    local state=down
+
+    $limit "$@" && state=up
+
+    print -r -- $state >| "$cache"
+    rmdir "$lock" 2>/dev/null
+  ) >/dev/null 2>&1 &!
+}
+
+# Whether the service named $1 was up when it was last asked: up, down, or
+# nothing at all before the first background check has come back. $2... is the
+# command that answers that, and its verdict is trusted for SERVICE_CACHE_TTL
+# seconds.
+function service_state() {
+  local name=$1
+  shift
+  local cache="$CACHE_DIR/$name"
+
+  [[ -d $CACHE_DIR ]] || mkdir -p $CACHE_DIR 2>/dev/null || return 0
+
+  [[ -n "$cache"(#qNms-$SERVICE_CACHE_TTL) ]] || refresh_service_cache "$cache" "$@"
+
+  [[ -r $cache ]] && print -r -- "$(<$cache)"
 }
 
 ###
@@ -234,7 +307,8 @@ function status_git() {
 # Everything past the throttle happens in a detached subshell, resolving the
 # repository root included, so a run that does not fetch costs no git process at
 # all. The fetch must never make the status line wait, and must never be able to
-# ask for a password.
+# ask for a password. Its stdout is closed for the same reason as the service
+# checks': a child holding that pipe open is a reader kept waiting.
 function fetch_git_repository() {
   local dir=$1
   local stamp_dir="$CACHE_DIR/git-fetch"
@@ -274,65 +348,46 @@ function fetch_git_repository() {
 
     GIT_TERMINAL_PROMPT=0 \
     GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=5' \
-      git -C "$root" fetch --quiet --prune --no-tags >/dev/null 2>&1
+      git -C "$root" fetch --quiet --prune --no-tags
 
     rmdir "$lock" 2>/dev/null
-  ) &!
-}
-
-# Ask the docker daemon whether it answers, in the background, and leave the
-# result in the cache for whichever run of this script comes next.
-#
-# Detached on purpose: an unresponsive daemon would otherwise stall every
-# redraw, and a status line that takes longer than the gap between two
-# assistant messages is a status line that never gets to print.
-function refresh_docker_cache() {
-  local cache=$1
-  local lock="$CACHE_DIR/docker.lock"
-  local -a limit
-
-  # Reclaim a lock left behind by a check that was killed.
-  [[ -n "$lock"(#qNmm+1) ]] && rmdir "$lock" 2>/dev/null
-
-  # mkdir is atomic, so this doubles as the "already checking" test.
-  mkdir "$lock" 2>/dev/null || return 0
-
-  (( $+commands[timeout] )) && limit=( timeout 5 )
-
-  (
-    local state=down
-
-    # `docker version` is the cheapest command that talks to the server. Under
-    # WSL the client prints its complaints on stdout rather than stderr, so the
-    # exit status is what has to be trusted.
-    $limit docker version --format '{{.Server.Version}}' >/dev/null 2>&1 && state=up
-
-    print -r -- $state >| "$cache"
-    rmdir "$lock" 2>/dev/null
-  ) &!
-}
-
-# A marker when the docker daemon is not answering, and nothing at all when it
-# is. Silent too when docker is not installed, or before the first background
-# check has come back: there is nothing to report in either case.
-function status_docker() {
-  (( $+commands[docker] )) || return 0
-
-  local cache="$CACHE_DIR/docker"
-
-  [[ -d $CACHE_DIR ]] || mkdir -p $CACHE_DIR 2>/dev/null || return 0
-
-  [[ -n "$cache"(#qNms-$DOCKER_CACHE_TTL) ]] || refresh_docker_cache "$cache"
-
-  [[ -r $cache ]] || return 0
-  [[ "$(<$cache)" == down ]] || return 0
-
-  print -r -- "${C_ALERT}⨯docker${C_RESET}"
+  ) >/dev/null 2>&1 &!
 }
 
 ###
 ### Row two
 ###
+
+# The whale, while the docker daemon answers, and nothing when it does not.
+# Silent too when docker is not installed at all, and until the first
+# background check comes back.
+#
+# `docker version` is the cheapest command that talks to the server.
+function status_docker() {
+  (( $+commands[docker] )) || return 0
+
+  [[ "$(service_state docker docker version --format '{{.Server.Version}}')" == up ]] || return 0
+
+  print -r -- "$DOCKER_GLYPH"
+}
+
+# The key, while the ssh agent answers and holds at least one key.
+#
+# `ssh-add -l` exits 0 with keys, 1 for an agent that answers but is empty, and
+# 2 when there is no agent to reach. Only the first earns the marker: a
+# Bitwarden vault that has locked itself leaves the relay up and the agent
+# empty, and that is precisely when pushing starts to fail.
+#
+# Nothing here knows which agent it is talking to, which is the point: the
+# Bitwarden relay under WSL and the keychain-held agent everywhere else both
+# answer on $SSH_AUTH_SOCK, inherited from the shell that started Claude Code.
+function status_ssh_agent() {
+  (( $+commands[ssh-add] )) || return 0
+
+  [[ "$(service_state ssh-agent ssh-add -l)" == up ]] || return 0
+
+  print -r -- "$SSH_GLYPH"
+}
 
 # A ten block bar for the share of the context window in use.
 function status_context() {
@@ -423,7 +478,6 @@ status_path "$dir"
 project_label=$reply[1]
 project_path=$reply[2]
 
-docker_segment=$(status_docker)
 git_segment=$(status_git "$dir")
 
 # An empty git segment means this is not a repository, which saves the fetch a
@@ -431,8 +485,7 @@ git_segment=$(status_git "$dir")
 [[ -n $git_segment ]] && fetch_git_repository "$dir"
 
 typeset -a right_segments
-[[ -n $docker_segment ]] && right_segments+=( "$docker_segment" )
-[[ -n $git_segment ]]    && right_segments+=( "$git_segment" )
+[[ -n $git_segment ]] && right_segments+=( "$git_segment" )
 right_segments+=( "[$(strftime '%H:%M' $EPOCHSECONDS)]" )
 
 row_one_right="${(j: :)right_segments}"
@@ -489,7 +542,31 @@ typeset -a limit_segments
 limit_segments+=( ${(f)"$(status_rate_limit "$five_hour_pct" "$five_hour_reset")"} )
 limit_segments+=( ${(f)"$(status_rate_limit "$seven_day_pct" "$seven_day_reset")"} )
 
-row_two="${(j: · :)session_segments}"
-(( $#limit_segments )) && row_two+="  ${(j: · :)limit_segments}"
+row_two_left="${(j: · :)session_segments}"
+(( $#limit_segments )) && row_two_left+="  ${(j: · :)limit_segments}"
 
-print -r -- "$row_two"
+# The service markers, at the right hand end of row two, run together as one
+# block. Each is there or it is not; nothing takes their place when a service
+# is down, which is why they can be dropped whole when the terminal is too
+# narrow to hold them.
+typeset -a service_segments
+service_segments+=( ${(f)"$(status_docker)"} )
+service_segments+=( ${(f)"$(status_ssh_agent)"} )
+
+row_two_right="${(j::)service_segments}"
+row_two_gap=0
+
+if [[ -n $row_two_right ]]; then
+  row_two_gap=$((
+    ${COLUMNS:-0} - ROW_RIGHT_MARGIN
+      - $(visible_width "$row_two_left") - $(visible_width "$row_two_right")
+  ))
+fi
+
+if (( row_two_gap >= 2 )); then
+  print -r -- "${row_two_left}$(repeat_string ' ' $row_two_gap)${row_two_right}"
+else
+  # No room for the markers on their own side of the row, so they go
+  # unreported rather than crowding what row two is mainly for.
+  print -r -- "$row_two_left"
+fi
